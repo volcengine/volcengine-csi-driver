@@ -1,0 +1,167 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csi-ebs-controller
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: csi-ebs-controller
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: csi-ebs-controller
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: csi-ebs-controller
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: csi-ebs
+      priorityClassName: system-cluster-critical
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+      containers:
+        - name: csi-provisioner
+          image: cr-cn-guilin-boe.ivolces.com/vke/csi-provisioner:v3.1.0
+          imagePullPolicy: Always
+          args:
+            - "--feature-gates=Topology=true"
+            - "--strict-topology=true"
+            - "--csi-address=$(ADDRESS)"
+            - "--v=2"
+            - "--timeout=25s"
+            - "--leader-election"
+            - "--default-fstype=ext4"
+          env:
+            - name: "ADDRESS"
+              value: "/csi/csi.sock"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            limits:
+              cpu: 300m
+              memory: 900Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+        - name: csi-attacher
+          image: cr-cn-guilin-boe.ivolces.com/vke/csi-attacher:v3.4.0
+          imagePullPolicy: Always
+          args:
+            - "--v=2"
+            - "--csi-address=$(ADDRESS)"
+            - "--timeout=120s"
+            - "--leader-election"
+            - "--retry-interval-max=30s"
+          env:
+            - name: "ADDRESS"
+              value: "/csi/csi.sock"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            limits:
+              cpu: 300m
+              memory: 900Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+        - name: csi-resizer
+          image: cr-cn-guilin-boe.ivolces.com/vke/csi-resizer:v1.4.0
+          imagePullPolicy: Always
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v=2"
+            - "--leader-election"
+            - "--timeout=25s"
+            - "--handle-volume-inuse-error=false"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            limits:
+              cpu: 300m
+              memory: 800Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+        - name: csi-snapshotter
+          image: cr-cn-guilin-boe.ivolces.com/vke/csi-snapshotter:v6.2.1
+          imagePullPolicy: Always
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v=2"
+            - "--leader-election"
+            - "--snapshot-name-prefix=vke-snapshot"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            limits:
+              cpu: 300m
+              memory: 300Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+        - name: liveness-probe
+          image: cr-cn-guilin-boe.ivolces.com/vke/livenessprobe:v2.6.0
+          imagePullPolicy: Always
+          args:
+            - "--csi-address=/csi/csi.sock"
+            - "--health-port=19808"
+            - "--probe-timeout=3s"
+            - "--v=2"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+        - name: csi-ebs-driver
+          image: cr-cn-guilin-boe.ivolces.com/vke/ebsplugin:v2.8
+          imagePullPolicy: Always
+          args:
+            - "--endpoint=$(CSI_ENDPOINT)"
+          ports:
+            - containerPort: 19808
+              name: healthz
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+          env:
+            - name: "CSI_ENDPOINT"
+              value: unix:///csi/csi.sock
+            - name: "VOLC_REGION"
+              value:
+            - name: "VOLC_HOST"
+              value:
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            limits:
+              cpu: 700m
+              memory: 1Gi
+            requests:
+              cpu: 10m
+              memory: 20Mi

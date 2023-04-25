@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: csi-ebs-pv-static
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 10Gi
+  csi:
+    driver: ebs.csi.volcengine.com
+    fsType: ext4
+    volumeAttributes:
+      fsType: ext4
+      type: ssd
+    volumeHandle: vol-167843404984614916  # it's volume id of the volume that has been created
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  volumeMode: Filesystem

@@ -1,0 +1,49 @@
+{{- if .Values.rbac.serviceAccount.create -}}
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-nas-provisioner-binding
+  labels:
+{{ include "csi-nas.labels" . | indent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "csi-nas.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: csi-nas-external-provisioner-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-nas-attacher-binding
+  labels:
+{{ include "csi-nas.labels" . | indent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "csi-nas.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: csi-nas-external-attacher-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-nas-resizer-role
+  labels:
+{{ include "csi-nas.labels" . | indent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "csi-nas.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: csi-nas-external-resizer-role
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

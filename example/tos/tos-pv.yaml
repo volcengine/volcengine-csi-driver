@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "pv-tos"
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 1Gi
+  csi:
+    driver: tos.csi.volcengine.com
+    volumeHandle: pv-tos
+    volumeAttributes:
+      # Replaced by the url of your region.
+      url: "http://tos-s3-cn-boe.ivolces.com"
+      # Replaced by the bucket name you want to use.
+      bucket: "csi-test"
+      # Replaced by the subPath in bucket you want to use.
+      path: /test
+      # You can specify any other options used by the s3fs command in here.
+      additional_args: "-oensure_diskfree=20480"
+    nodePublishSecretRef:
+      # Replaced by the name and namespace of your secret.
+      name: tos-secret
+      namespace: kube-system

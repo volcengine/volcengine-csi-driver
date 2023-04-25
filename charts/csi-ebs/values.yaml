@@ -1,0 +1,226 @@
+publicConfig:
+  registry: cr-cn-guilin-boe.ivolces.com/vke
+  affinity: {}
+  region: ""
+  endpoint: ""
+  ebsDiskType: ""
+  isPTSSDWhitelistAccount: false
+  deployNodeType: ""
+
+image:
+  imagePullPolicy: Always
+
+nameOverride: ""
+fullnameOverride: ""
+
+endPoint: "unix:///csi/csi.sock"
+
+controller:
+  name: controller
+
+  replicas: 1
+
+  hostNetwork:
+    enabled: false
+
+  nodeSelector:
+    kubernetes.io/os: linux
+
+  priorityClassName: system-cluster-critical
+
+  tolerations:
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node.cloudprovider.kubernetes.io/uninitialized"
+      effect: "NoSchedule"
+      operator: "Exists"
+    - key: vci.vke.volcengine.com/node-type
+      operator: Exists
+
+  provisioner:
+    image:
+      name: csi-provisioner
+      tag: v3.1.0
+    resources:
+      limits:
+        cpu: 300m
+        memory: 900Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  attacher:
+    image:
+      name: csi-attacher
+      tag: v3.4.0
+    resources:
+      limits:
+        cpu: 300m
+        memory: 900Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  resizer:
+    image:
+      name: csi-resizer
+      tag: v1.4.0
+    resources:
+      limits:
+        cpu: 300m
+        memory: 800Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  snapshotter:
+    image:
+      name: csi-snapshotter
+      tag: v6.2.1
+    resources:
+      limits:
+        cpu: 300m
+        memory: 300Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  liveness:
+    image:
+      name: livenessprobe
+      tag: v2.6.0
+    resources:
+      limits:
+        cpu: 100m
+        memory: 100Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  driver:
+    image:
+      name: ebsplugin
+      tag: v2.8
+    livenessProbe:
+      failureThreshold: 5
+      httpGet:
+        path: /healthz
+        port: healthz
+      initialDelaySeconds: 30
+      timeoutSeconds: 10
+      periodSeconds: 30
+    resources:
+      limits:
+        cpu: 700m
+        memory: 1Gi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+node:
+  name: node
+
+  hostNetwork:
+    enabled: false
+
+  dnsPolicy: ClusterFirstWithHostNet
+
+  nodeSelector:
+    kubernetes.io/os: linux
+
+  priorityClassName: system-node-critical
+
+  tolerations:
+    - operator: Exists
+
+  volumes:
+    - hostPath:
+        path: /var/lib/kubelet/plugins/ebs.csi.volcengine.com
+        type: DirectoryOrCreate
+      name: socket-dir
+    - hostPath:
+        path: /var/lib/kubelet/
+        type: DirectoryOrCreate
+      name: mountpoint-dir
+    - hostPath:
+        path: /var/lib/kubelet/plugins_registry/
+        type: DirectoryOrCreate
+      name: registration-dir
+    - hostPath:
+        path: /dev
+        type: Directory
+      name: device-dir
+    - hostPath:
+        path: /sys/bus/scsi/devices
+        type: Directory
+      name: sys-devices-dir
+    - hostPath:
+        path: /sys/class/scsi_host/
+        type: Directory
+      name: scsi-host-dir
+
+  liveness:
+    image:
+      name: livenessprobe
+      tag: v2.6.0
+    resources:
+      limits:
+        cpu: 100m
+        memory: 100Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  registrar:
+    image:
+      name: csi-node-driver-registrar
+      tag: v2.5.1
+    lifecycle:
+      preStop:
+        exec:
+          command: [ "/bin/sh", "-c", "rm -rf /registration/ebs.csi.volcengine.com-reg.sock /csi/csi.sock" ]
+    resources:
+      limits:
+        cpu: 100m
+        memory: 100Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  driver:
+    image:
+      name: ebsplugin
+      tag: v2.8
+    livenessProbe:
+      failureThreshold: 5
+      httpGet:
+        path: /healthz
+        port: healthz
+      initialDelaySeconds: 30
+      timeoutSeconds: 10
+      periodSeconds: 30
+    volumeMounts:
+      - mountPath: /csi
+        name: socket-dir
+      - mountPath: /var/lib/kubelet/
+        mountPropagation: Bidirectional
+        name: mountpoint-dir
+      - mountPath: /dev
+        name: device-dir
+      - mountPath: /sys/bus/scsi/devices
+        name: sys-devices-dir
+      - mountPath: /sys/class/scsi_host/
+        name: scsi-host-dir
+    resources:
+      limits:
+        cpu: 200m
+        memory: 200Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+rbac:
+  serviceAccount:
+    create: true
+    name: ""

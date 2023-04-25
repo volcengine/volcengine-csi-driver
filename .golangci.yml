@@ -1,0 +1,26 @@
+run:
+  deadline: 5m
+  skip-dirs:
+  - pkg/client/clientset
+  - pkg/server/client
+
+linter-settings:
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+
+linters:
+  enable:
+  - gofmt
+  - goimports
+  - misspell
+  - unparam
+  disable:
+  - errcheck
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+  - path: _test.go
+    linters:
+    - errcheck

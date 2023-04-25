@@ -1,0 +1,18 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: csi-pod
+spec:
+  containers:
+    - name: csi-pod
+      image: busybox
+      command: [ "/bin/sh", "-c" ]
+      args: [ "tail -f /dev/null" ]
+      volumeMounts:
+        - mountPath: "/data"
+          name: csi-ebs-pvc
+  volumes:
+    - name: csi-ebs-pvc
+      persistentVolumeClaim:
+        claimName: csi-ebs-pvc # defined in csi-pvc.yaml

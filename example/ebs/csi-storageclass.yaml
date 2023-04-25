@@ -1,0 +1,13 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: volcengine-ebs
+provisioner: ebs.csi.volcengine.com
+parameters:
+  type: zenya-ssd
+  fsType: ext4
+  zone: lf-zone-01
+reclaimPolicy: Delete
+allowVolumeExpansion: false
+volumeBindingMode: Immediate

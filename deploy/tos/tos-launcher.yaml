@@ -1,0 +1,68 @@
+---
+# Source: csi-tos/templates/csilauncher.yaml
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: csi-tos-launcher
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: csi-tos-launcher
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: csi-tos-launcher
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: csi-tos-launcher
+    spec:
+      hostNetwork: true
+      priorityClassName: system-node-critical
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node.kubernetes.io/instance-type
+                    operator: NotIn
+                    values:
+                      - virtual-node
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: tos-launcher
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          image: cr-cn-guilin-boe.ivolces.com/vke/tos-launcher:v0.1.0
+          imagePullPolicy: "Always"
+          resources:
+            limits:
+              cpu: "8"
+              memory: 8Gi
+            requests:
+              cpu: 250m
+              memory: 250Mi
+          volumeMounts:
+            - name: launcher-socket-dir
+              mountPath: /tmp
+              mountPropagation: "Bidirectional"
+            - name: pods-mount-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: "Bidirectional"
+            - mountPath: /dev/fuse
+              name: host-fuse
+      volumes:
+        - name: launcher-socket-dir
+          hostPath:
+            path: /etc/csi-tos
+            type: DirectoryOrCreate
+        - name: pods-mount-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: host-fuse
+          hostPath:
+            path: /dev/fuse

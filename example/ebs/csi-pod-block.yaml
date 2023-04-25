@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: csi-pod-raw
+spec:
+  containers:
+    - name: csi-pod-raw
+      image: busybox
+      command: ["/bin/sh", "-c"]
+      args: [ "tail -f /dev/null" ]
+      volumeDevices:
+        - name: csi-ebs-pvc-raw
+          devicePath: /dev/loop6 # This device path needs to be replaced with the site specific
+  volumes:
+    - name: csi-ebs-pvc-raw
+      persistentVolumeClaim:
+        claimName: csi-ebs-pvc-raw  # defined in csi-pvc-block.yaml

@@ -1,0 +1,182 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "csi-ebs.controller.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    addon.vke.volcengine.com/status-check: csi-ebs
+{{ include "csi-ebs.controller.labels" . | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "csi-ebs.controller.selectorLabels" . | nindent 6 }}
+  replicas: {{ .Values.controller.replicas }}
+  template:
+    metadata:
+      labels:
+        addon.vke.volcengine.com/status-check: csi-ebs
+        {{- include "csi-ebs.controller.selectorLabels" . | nindent 8 }}
+      {{- if eq .Values.publicConfig.deployNodeType "VirtualNode" }}
+      annotations:
+        vke.volcengine.com/burst-to-vci: enforce
+        vci.vke.volcengine.com/enable-metadata-capability: "true"
+        vci.vke.volcengine.com/iam-role-name: VCIInstanceRoleForVKE
+      {{- end }}
+    spec:
+      {{- if .Values.controller.hostNetwork.enabled }}
+      hostNetwork: true
+      {{- end }}
+      {{- if .Values.controller.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.controller.nodeSelector | trim | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "csi-ebs.serviceAccountName" . }}
+      priorityClassName: {{ .Values.controller.priorityClassName }}
+      {{- with .Values.publicConfig.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.publicConfig.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+      containers:
+        - name: csi-provisioner
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.controller.provisioner.image.name }}:{{ .Values.controller.provisioner.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - "--feature-gates=Topology=true"
+            - "--strict-topology=true"
+            - "--csi-address=$(ADDRESS)"
+            - "--v=2"
+            - "--timeout=25s"
+            - "--leader-election"
+            - "--default-fstype=ext4"
+          env:
+            - name: "ADDRESS"
+              value: "/csi/csi.sock"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          {{- if .Values.controller.provisioner.resources }}
+          resources:
+            {{- toYaml .Values.controller.provisioner.resources | trim | nindent 12 }}
+          {{- end }}
+        - name: csi-attacher
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.controller.attacher.image.name }}:{{ .Values.controller.attacher.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - "--v=2"
+            - "--csi-address=$(ADDRESS)"
+            - "--timeout=120s"
+            - "--leader-election"
+            - "--retry-interval-max=30s"
+          env:
+            - name: "ADDRESS"
+              value: "/csi/csi.sock"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          {{- if .Values.controller.attacher.resources }}
+          resources:
+            {{- toYaml .Values.controller.attacher.resources | trim | nindent 12 }}
+          {{- end }}
+        - name: csi-resizer
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.controller.resizer.image.name }}:{{ .Values.controller.resizer.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v=2"
+            - "--leader-election"
+            - "--timeout=25s"
+            - "--handle-volume-inuse-error=false"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          {{- if .Values.controller.resizer.resources }}
+          resources:
+            {{- toYaml .Values.controller.resizer.resources | trim | nindent 12 }}
+          {{- end }}
+        - name: csi-snapshotter
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.controller.snapshotter.image.name }}:{{ .Values.controller.snapshotter.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--v=2"
+            - "--leader-election"
+            - "--snapshot-name-prefix=vke-snapshot"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          {{- if .Values.controller.snapshotter.resources }}
+          resources:
+            {{- toYaml .Values.controller.snapshotter.resources | trim | nindent 12 }}
+          {{- end }}
+        - name: liveness-probe
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.controller.liveness.image.name }}:{{ .Values.controller.liveness.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - "--csi-address=/csi/csi.sock"
+            - "--health-port=19808"
+            - "--probe-timeout=3s"
+            - "--v=2"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          {{- if .Values.controller.liveness.resources }}
+          resources:
+            {{- toYaml .Values.controller.liveness.resources | trim | nindent 12 }}
+          {{- end }}
+        - name: csi-ebs-driver
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.controller.driver.image.name }}:{{ .Values.controller.driver.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - "--endpoint=$(CSI_ENDPOINT)"
+          ports:
+          - containerPort: 19808
+            name: healthz
+            protocol: TCP
+          {{- if .Values.controller.driver.livenessProbe }}
+          livenessProbe:
+            {{- toYaml .Values.controller.driver.livenessProbe | trim | nindent 12 }}
+          {{- end }}
+          env:
+            - name: "CSI_ENDPOINT"
+              value: {{ .Values.endPoint }}
+            - name: "VOLC_REGION"
+              value: {{ .Values.publicConfig.region }}
+            - name: "VOLC_HOST"
+              value: {{ .Values.publicConfig.endpoint }}
+            {{- if eq .Values.publicConfig.deployNodeType "VirtualNode" }}
+            - name: "VOLC_ASSUMEROLENAME"
+              value: "VCIInstanceRoleForVKE"
+            {{- end }}
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          {{- if .Values.controller.driver.resources }}
+          resources:
+            {{- toYaml .Values.controller.driver.resources | trim | nindent 12 }}
+          {{- end }}
+      topologySpreadConstraints:
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: {{ .Release.Name }}
+          maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+        - labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: {{ .Release.Name }}
+          maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway

@@ -1,0 +1,9 @@
+apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: nas.csi.volcengine.com
+  labels:
+{{ include "csi-nas.labels" . | indent 4 }}
+spec:
+  attachRequired: true
+  podInfoOnMount: true

@@ -1,0 +1,20 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: csi-pod
+spec:
+  containers:
+    - name: csi-pod
+      image: cr-cn-guilin-boe.volces.com/vke_rd/nginx:latest
+      command:
+        - "/bin/bash"
+        - "-c"
+        - set -euo pipefail; while true; do echo $(hostname) $(date) >> /var/lib/www/$(hostname); sleep 1; done
+      volumeMounts:
+        - mountPath: "/var/lib/www"
+          name: csi-tos-pvc
+  volumes:
+    - name: csi-tos-pvc
+      persistentVolumeClaim:
+        claimName: csi-tos-pvc

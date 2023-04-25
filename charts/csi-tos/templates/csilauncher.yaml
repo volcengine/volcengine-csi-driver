@@ -1,0 +1,64 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: {{ include "csi-tos.launcher.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    addon.vke.volcengine.com/status-check: csi-tos
+{{ include "csi-tos.launcher.labels" . | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "csi-tos.launcher.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        addon.vke.volcengine.com/status-check: csi-tos
+        {{- include "csi-tos.launcher.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.launcher.hostNetwork.enabled }}
+      hostNetwork: true
+      {{- end }}
+      priorityClassName: {{ .Values.launcher.priorityClassName }}
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}
+      {{- if .Values.launcher.tolerations }}
+      tolerations:
+        {{- toYaml .Values.launcher.tolerations | trim | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: tos-launcher
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.launcher.image.name }}:{{ .Values.launcher.image.tag }}
+          imagePullPolicy: "Always"
+          {{- if .Values.launcher.resources }}
+          resources:
+            {{- toYaml .Values.launcher.resources | trim | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: launcher-socket-dir
+              mountPath: /tmp
+              mountPropagation: "Bidirectional"
+            - name: pods-mount-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: "Bidirectional"
+            - mountPath: /dev/fuse
+              name: host-fuse
+      volumes:
+        - name: launcher-socket-dir
+          hostPath:
+            path: /etc/csi-tos
+            type: DirectoryOrCreate
+        - name: pods-mount-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: host-fuse
+          hostPath:
+            path: /dev/fuse

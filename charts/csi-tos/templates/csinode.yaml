@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "csi-tos.node.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    addon.vke.volcengine.com/status-check: csi-tos
+{{ include "csi-tos.node.labels" . | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "csi-tos.node.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        addon.vke.volcengine.com/status-check: csi-tos
+        {{- include "csi-tos.node.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.node.hostNetwork.enabled }}
+      hostNetwork: true
+      {{- end }}
+      {{- if .Values.node.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.node.nodeSelector | trim | nindent 8 }}
+      {{- end }}
+      priorityClassName: {{ .Values.node.priorityClassName }}
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}
+      {{- if .Values.node.tolerations }}
+      tolerations:
+        {{- toYaml .Values.node.tolerations | trim | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: liveness-probe
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.node.liveness.image.name }}:{{ .Values.node.liveness.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - --csi-address=/csi/csi.sock
+            - --health-port=9909
+            - --probe-timeout=3s
+            - --v=2
+          {{- if .Values.node.liveness.resources }}
+          resources:
+            {{- toYaml .Values.node.liveness.resources | trim | nindent 12 }}
+          {{- end }}
+        - name: node-driver-registrar
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.node.registrar.image.name }}:{{ .Values.node.registrar.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - --csi-address=$(ADDRESS)
+            - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+            - --v=2
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /registration/tos.csi.volcengine.com-reg.sock /csi/csi.sock"]
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: /var/lib/kubelet/plugins/tos.csi.volcengine.com/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+          {{- if .Values.node.registrar.resources }}
+          resources:
+            {{- toYaml .Values.node.registrar.resources | trim | nindent 12 }}
+          {{- end }}
+        - name: csi-tos-driver
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.node.driver.image.name }}:{{ .Values.node.driver.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [ "SYS_ADMIN" ]
+            allowPrivilegeEscalation: true
+          args:
+            - "-v=5"
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--node-id=$(NODE_ID)"
+          ports:
+            - containerPort: 9909
+              name: healthz
+              protocol: TCP
+          {{- if .Values.node.driver.livenessProbe }}
+          livenessProbe:
+            {{- toYaml .Values.node.driver.livenessProbe | trim | nindent 12 }}
+          {{- end }}
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: launcher-socket-dir
+              mountPath: /tmp
+              mountPropagation: "Bidirectional"
+            - name: pods-mount-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: "Bidirectional"
+          {{- if .Values.node.driver.resources }}
+          resources:
+            {{- toYaml .Values.node.driver.resources | trim | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: socket-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/tos.csi.volcengine.com
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+        - name: launcher-socket-dir
+          hostPath:
+            path: /etc/csi-tos
+            type: DirectoryOrCreate
+        - name: pods-mount-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory

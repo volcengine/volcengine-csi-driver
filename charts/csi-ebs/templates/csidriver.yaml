@@ -1,0 +1,9 @@
+apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: ebs.csi.volcengine.com
+  labels:
+{{ include "csi-ebs.common.labels" . | indent 4 }}
+spec:
+  attachRequired: true
+  podInfoOnMount: true

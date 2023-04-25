@@ -1,0 +1,17 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: volcengine-nas
+provisioner: nas.csi.volcengine.com
+parameters:
+  volumeAs: subpath
+  server: "100.65.230.38"
+  fsId: "fs-039e9a16"
+  subPath: "/subpath"
+mountOptions:
+  - nolock,proto=tcp,noresvport
+  - vers=3
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: Immediate

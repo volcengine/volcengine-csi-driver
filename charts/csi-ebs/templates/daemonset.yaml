@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "csi-ebs.node.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    addon.vke.volcengine.com/status-check: csi-ebs
+{{ include "csi-ebs.node.labels" . | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "csi-ebs.node.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        addon.vke.volcengine.com/status-check: csi-ebs
+        {{- include "csi-ebs.node.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.node.hostNetwork.enabled }}
+      hostNetwork: true
+      {{- end }}
+      dnsPolicy: {{ .Values.node.dnsPolicy }}
+      {{- if .Values.node.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.node.nodeSelector | trim | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "csi-ebs.serviceAccountName" . }}
+      priorityClassName: {{ .Values.node.priorityClassName }}
+      {{- with .Values.publicConfig.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.node.tolerations }}
+      tolerations:
+        {{- toYaml .Values.node.tolerations | trim | nindent 8 }}
+      {{- end }}
+      {{- if .Values.node.volumes }}
+      volumes:
+        {{- toYaml .Values.node.volumes | trim | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: liveness-probe
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.node.liveness.image.name }}:{{ .Values.node.liveness.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - "--csi-address=/csi/csi.sock"
+            - "--probe-timeout=3s"
+            - "--v=2"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          {{- if .Values.node.liveness.resources }}
+          resources:
+            {{- toYaml .Values.node.liveness.resources | trim | nindent 12 }}
+          {{- end }}
+        - name: node-driver-registrar
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.node.registrar.image.name }}:{{ .Values.node.registrar.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
+            - "--v=2"
+          {{- if .Values.node.registrar.lifecycle }}
+          lifecycle:
+            {{- toYaml .Values.node.registrar.lifecycle | trim | nindent 12 }}
+          {{- end }}
+          env:
+            - name: "ADDRESS"
+              value: "/csi/csi.sock"
+            - name: "DRIVER_REG_SOCK_PATH"
+              value: "/var/lib/kubelet/plugins/ebs.csi.volcengine.com/csi.sock"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+          {{- if .Values.node.registrar.resources }}
+          resources:
+            {{- toYaml .Values.node.registrar.resources | trim | nindent 12 }}
+          {{- end }}
+        - name: csi-ebs-driver
+          image: {{ .Values.publicConfig.registry }}/{{ .Values.node.driver.image.name }}:{{ .Values.node.driver.image.tag }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - "--endpoint=$(CSI_ENDPOINT)"
+          ports:
+            - containerPort: 9808
+              name: healthz
+              protocol: TCP
+          {{- if .Values.node.driver.livenessProbe }}
+          livenessProbe:
+            {{- toYaml .Values.node.driver.livenessProbe | trim | nindent 12 }}
+          {{- end }}
+          env:
+            - name: "CSI_ENDPOINT"
+              value: {{ .Values.endPoint }}
+            - name: "VOLC_REGION"
+              value: {{ .Values.publicConfig.region }}
+            - name: "VOLC_HOST"
+              value: {{ .Values.publicConfig.endpoint }}
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+            - mountPath: /var/lib/kubelet/
+              mountPropagation: Bidirectional
+              name: mountpoint-dir
+            - mountPath: /dev
+              name: device-dir
+            - mountPath: /sys/bus/scsi/devices
+              name: sys-devices-dir
+            - mountPath: /sys/class/scsi_host/
+              name: scsi-host-dir
+          {{- if .Values.node.driver.resources }}
+          resources:
+            {{- toYaml .Values.node.driver.resources | trim | nindent 12 }}
+          {{- end }}

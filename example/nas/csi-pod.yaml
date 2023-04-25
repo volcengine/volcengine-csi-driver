@@ -1,0 +1,20 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: csi-pod
+spec:
+  containers:
+    - name: csi-pod
+      image: cr-stg-cn-beijing.ivolces.com/app/nginx:1.17
+      command:
+        - "/bin/bash"
+        - "-c"
+        - set -euo pipefail; while true; do echo $(hostname) $(date) >> /var/lib/www/$(hostname); sleep 1; done
+      volumeMounts:
+        - mountPath: "/var/lib/www"
+          name: csi-nas-pvc
+  volumes:
+    - name: csi-nas-pvc
+      persistentVolumeClaim:
+        claimName: csi-nas-pvc # defined in csi-pvc.yaml

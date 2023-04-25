@@ -1,0 +1,133 @@
+---
+# Source: csi-nas/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csi-nas-controller
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: csi-nas-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: csi-nas-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: csi-nas-controller
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: csi-nas
+      priorityClassName: system-cluster-critical
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node.kubernetes.io/instance-type
+                    operator: NotIn
+                    values:
+                      - virtual-node
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+      containers:
+        - name: csi-provisioner
+          image: cr-cn-beijing.ivolces.com/vke/csi-provisioner:v3.1.0
+          imagePullPolicy: Always
+          args:
+            - "--feature-gates=Topology=false"
+            - "--csi-address=$(ADDRESS)"
+            - "--v=2"
+            - "--timeout=15s"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+        - name: csi-attacher
+          image: cr-cn-beijing.ivolces.com/vke/csi-attacher:v3.4.0
+          imagePullPolicy: Always
+          args:
+            - "--v=2"
+            - "--csi-address=$(ADDRESS)"
+            - "--timeout=120s"
+            - "--leader-election"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+        - name: liveness-probe
+          image: cr-cn-beijing.ivolces.com/vke/livenessprobe:v2.6.0
+          imagePullPolicy: Always
+          args:
+            - --csi-address=/csi/csi.sock
+            - --health-port=19908
+            - --probe-timeout=3s
+            - --v=2
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+        - name: csi-nas-driver
+          image: cr-cn-beijing.ivolces.com/vke/nasplugin:v2.8
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [ "SYS_ADMIN" ]
+            allowPrivilegeEscalation: true
+          args:
+            - "--v=5"
+            - "--endpoint=$(CSI_ENDPOINT)"
+          ports:
+            - containerPort: 19908
+              name: healthz
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+          resources:
+            limits:
+              cpu: 900m
+              memory: 1900Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi

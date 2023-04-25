@@ -1,0 +1,187 @@
+publicConfig:
+  registry: cr-cn-beijing.ivolces.com/vke
+  deployNodeType: ""
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  # affinity -- Affinity for pod assignment
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node.kubernetes.io/instance-type
+                operator: NotIn
+                values:
+                  - virtual-node
+
+image:
+  imagePullPolicy: Always
+
+nameOverride: ""
+fullnameOverride: ""
+
+rbac:
+  serviceAccount:
+    create: true
+    name: "csi-nas"
+
+controller:
+  name: controller
+
+  replicas: 1
+
+  hostNetwork:
+    enabled: false
+
+  nodeSelector:
+    kubernetes.io/os: linux
+
+  priorityClassName: system-cluster-critical
+
+  tolerations:
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node.cloudprovider.kubernetes.io/uninitialized"
+      effect: "NoSchedule"
+      operator: "Exists"
+    - key: vci.vke.volcengine.com/node-type
+      operator: Exists
+
+  provisioner:
+    image:
+      name: csi-provisioner
+      tag: v3.1.0
+
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  attacher:
+    image:
+      name: csi-attacher
+      tag: v3.4.0
+
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  liveness:
+    image:
+      name: livenessprobe
+      tag: v2.6.0
+
+    resources:
+      limits:
+        cpu: 100m
+        memory: 100Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  driver:
+    image:
+      name: nasplugin
+      tag: v2.8
+
+    livenessProbe:
+      failureThreshold: 5
+      httpGet:
+        path: /healthz
+        port: healthz
+      initialDelaySeconds: 30
+      timeoutSeconds: 10
+      periodSeconds: 30
+
+    resources:
+      limits:
+        cpu: 900m
+        memory: 1900Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+node:
+  name: node
+
+  hostNetwork:
+    enabled: true
+
+  dnsPolicy: ClusterFirstWithHostNet
+
+  nodeSelector:
+    kubernetes.io/os: linux
+
+  priorityClassName: system-node-critical
+
+  tolerations:
+    - operator: Exists
+
+  volumes:
+    - hostPath:
+        path: /var/lib/kubelet/plugins/nas.csi.volcengine.com
+        type: DirectoryOrCreate
+      name: socket-dir
+    - hostPath:
+        path: /var/lib/kubelet/
+        type: DirectoryOrCreate
+      name: mountpoint-dir
+    - hostPath:
+        path: /var/lib/kubelet/plugins_registry/
+        type: DirectoryOrCreate
+      name: registration-dir
+
+  liveness:
+    image:
+      name: livenessprobe
+      tag: v2.2.0
+
+    resources:
+      limits:
+        cpu: 100m
+        memory: 100Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  registrar:
+    image:
+      name: csi-node-driver-registrar
+      tag: v2.5.1
+
+    resources:
+      limits:
+        cpu: 100m
+        memory: 100Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
+
+  driver:
+    image:
+      name: nasplugin
+      tag: v2.8
+
+    livenessProbe:
+      failureThreshold: 5
+      httpGet:
+        path: /healthz
+        port: healthz
+      initialDelaySeconds: 30
+      timeoutSeconds: 10
+      periodSeconds: 30
+
+    resources:
+      limits:
+        cpu: 200m
+        memory: 200Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi
