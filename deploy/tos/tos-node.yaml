@@ -16,9 +16,10 @@ spec:
       labels:
         app.kubernetes.io/name: csi-tos-node
     spec:
+      serviceAccount: csi-tos
       hostNetwork: true
       nodeSelector:
-        kubernetes.io/os: linux
+        beta.kubernetes.io/os: linux
       priorityClassName: system-node-critical
       affinity:
         nodeAffinity:
@@ -36,12 +37,12 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-          image: cr-cn-guilin-boe.ivolces.com/vke/livenessprobe:v2.2.0
+          image: cr-cn-guilin-boe.ivolces.com/vke/livenessprobe:v0.4.1
           imagePullPolicy: Always
           args:
             - --csi-address=/csi/csi.sock
             - --health-port=9909
-            - --probe-timeout=3s
+            - --connection-timeout=3s
             - --v=2
           resources:
             limits:
@@ -51,26 +52,21 @@ spec:
               cpu: 10m
               memory: 20Mi
         - name: node-driver-registrar
-          image: cr-cn-guilin-boe.ivolces.com/vke/csi-node-driver-registrar:v2.0.1
+          image: cr-cn-guilin-boe.ivolces.com/vke/csi-driver-registrar:v0.4.2
           imagePullPolicy: Always
           args:
             - --csi-address=$(ADDRESS)
-            - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
             - --v=2
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/sh", "-c", "rm -rf /registration/tos.csi.volcengine.com-reg.sock /csi/csi.sock"]
           env:
             - name: ADDRESS
               value: /csi/csi.sock
-            - name: DRIVER_REG_SOCK_PATH
-              value: /var/lib/kubelet/plugins/tos.csi.volcengine.com/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
-            - name: registration-dir
-              mountPath: /registration
           resources:
             limits:
               cpu: 100m
@@ -79,7 +75,7 @@ spec:
               cpu: 10m
               memory: 20Mi
         - name: csi-tos-driver
-          image: cr-cn-guilin-boe.ivolces.com/vke/tosplugin:v2.8
+          image: cr-cn-guilin-boe.ivolces.com/vke/tosplugin:v0.3
           imagePullPolicy: Always
           securityContext:
             privileged: true
@@ -130,10 +126,6 @@ spec:
           hostPath:
             path: /var/lib/kubelet/plugins/tos.csi.volcengine.com
             type: DirectoryOrCreate
-        - name: registration-dir
-          hostPath:
-            path: /var/lib/kubelet/plugins_registry
-            type: Directory
         - name: launcher-socket-dir
           hostPath:
             path: /etc/csi-tos

@@ -16,6 +16,7 @@ spec:
         addon.vke.volcengine.com/status-check: csi-tos
         {{- include "csi-tos.node.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccount: {{ include "csi-tos.serviceAccount.fullname" . }}
       {{- if .Values.node.hostNetwork.enabled }}
       hostNetwork: true
       {{- end }}
@@ -42,7 +43,7 @@ spec:
           args:
             - --csi-address=/csi/csi.sock
             - --health-port=9909
-            - --probe-timeout=3s
+            - --connection-timeout=3s
             - --v=2
           {{- if .Values.node.liveness.resources }}
           resources:
@@ -53,22 +54,17 @@ spec:
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           args:
             - --csi-address=$(ADDRESS)
-            - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
             - --v=2
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/sh", "-c", "rm -rf /registration/tos.csi.volcengine.com-reg.sock /csi/csi.sock"]
           env:
             - name: ADDRESS
               value: /csi/csi.sock
-            - name: DRIVER_REG_SOCK_PATH
-              value: /var/lib/kubelet/plugins/tos.csi.volcengine.com/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
-            - name: registration-dir
-              mountPath: /registration
           {{- if .Values.node.registrar.resources }}
           resources:
             {{- toYaml .Values.node.registrar.resources | trim | nindent 12 }}
@@ -118,10 +114,6 @@ spec:
           hostPath:
             path: /var/lib/kubelet/plugins/tos.csi.volcengine.com
             type: DirectoryOrCreate
-        - name: registration-dir
-          hostPath:
-            path: /var/lib/kubelet/plugins_registry
-            type: Directory
         - name: launcher-socket-dir
           hostPath:
             path: /etc/csi-tos

@@ -14,7 +14,7 @@ node:
     enabled: true
 
   nodeSelector:
-    kubernetes.io/os: linux
+    beta.kubernetes.io/os: linux
 
   priorityClassName: system-node-critical
 
@@ -24,7 +24,7 @@ node:
   liveness:
     image:
       name: livenessprobe
-      tag: v2.2.0
+      tag: v0.4.1
 
     resources:
       limits:
@@ -36,8 +36,8 @@ node:
 
   registrar:
     image:
-      name: csi-node-driver-registrar
-      tag: v2.0.1
+      name: csi-driver-registrar
+      tag: v0.4.2
 
     resources:
       limits:
@@ -50,7 +50,7 @@ node:
   driver:
     image:
       name: tosplugin
-      tag: v2.8
+      tag: v0.3
 
     livenessProbe:
       failureThreshold: 5
@@ -94,6 +94,16 @@ launcher:
     requests:
       cpu: 250m
       memory: 250Mi
+
+attacher:
+  name: external-runner
+
+  image:
+    name: csi-attacher
+    tag: v0.3.0
+
+serviceAccount:
+  name: external-runner
 
 ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
 # affinity -- Affinity for pod assignment

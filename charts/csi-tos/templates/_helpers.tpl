@@ -40,6 +40,22 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Create a default fully qualified attacher name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "csi-tos.attacher.fullname" -}}
+{{- printf "%s-%s" (include "csi-tos.fullname" .) .Values.attacher.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified attacher name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "csi-tos.serviceAccount.fullname" -}}
+{{- printf "%s-%s" (include "csi-tos.fullname" .) .Values.serviceAccount.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "csi-tos.chart" -}}
@@ -86,5 +102,21 @@ Launcher selector labels
 */}}
 {{- define "csi-tos.launcher.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "csi-tos.launcher.fullname" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Attacher labels
+*/}}
+{{- define "csi-tos.attacher.labels" -}}
+{{ include "csi-tos.labels" . }}
+{{ include "csi-tos.attacher.selectorLabels" . }}
+{{- end }}
+
+{{/*
+Attacher selector labels
+*/}}
+{{- define "csi-tos.attacher.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "csi-tos.attacher.fullname" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
