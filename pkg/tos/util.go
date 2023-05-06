@@ -32,7 +32,7 @@ import (
 
 	"github.com/volcengine/volcengine-csi-driver/pkg/util"
 
-	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/container-storage-interface/spec/lib/go/csi/v0"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/klog/v2"

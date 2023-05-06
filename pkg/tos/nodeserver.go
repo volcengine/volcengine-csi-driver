@@ -23,8 +23,9 @@ import (
 	"strings"
 
 	"github.com/volcengine/volcengine-csi-driver/pkg/util"
+	"github.com/volcengine/volcengine-csi-driver/pkg/util/inflight"
 
-	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/container-storage-interface/spec/lib/go/csi/v0"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/klog/v2"
@@ -32,13 +33,15 @@ import (
 
 // NodeServer driver
 type NodeServer struct {
-	d *Driver
+	d        *Driver
+	inFlight *inflight.InFlight
 }
 
 // NewNodeServer new NodeServer
 func NewNodeServer(driver *Driver) *NodeServer {
 	return &NodeServer{
-		d: driver,
+		d:        driver,
+		inFlight: inflight.NewInFlight(),
 	}
 }
 
@@ -58,10 +61,16 @@ func (ns *NodeServer) NodePublishVolume(_ context.Context, req *csi.NodePublishV
 	}
 
 	volID := req.GetVolumeId()
+	if ok := ns.inFlight.Insert(volID); !ok {
+		return nil, status.Errorf(codes.Aborted, "An operation with the given Volume %s already exists", volID)
+	}
+	defer func() {
+		klog.V(4).InfoS("NodePublishVolume: volume operation finished", "volumeID", volID)
+		ns.inFlight.Delete(volID)
+	}()
 	targetPath := req.GetTargetPath()
-	podUID := req.GetVolumeContext()["csi.storage.k8s.io/pod.uid"]
 
-	options, err := parseTosfsOptions(req.GetVolumeContext())
+	options, err := parseTosfsOptions(req.GetVolumeAttributes())
 	if err != nil {
 		klog.Errorf("parse options from VolumeAttributes for %s failed: %v", volID, err)
 		return nil, status.Errorf(codes.InvalidArgument, "parse options failed: %v", err)
@@ -71,13 +80,13 @@ func (ns *NodeServer) NodePublishVolume(_ context.Context, req *csi.NodePublishV
 	options.NotsupCompatDir = true
 
 	// create the tmp credential info from NodePublishSecrets
-	credFilePath, err := createCredentialFile(volID, options.Bucket, req.GetSecrets())
+	credFilePath, err := createCredentialFile(volID, options.Bucket, req.GetNodePublishSecrets())
 	if err != nil {
 		return nil, err
 	}
 
 	// create tos subPath if not exist
-	tosTmpPath := filepath.Join(tempMntPath, podUID+"_"+volID)
+	tosTmpPath := filepath.Join(tempMntPath, volID)
 	if err = os.MkdirAll(tosTmpPath, 0750); err != nil {
 		klog.Errorf("create tosTmpPath for %s failed: %v", volID, err)
 		return nil, status.Errorf(codes.Internal, "create tosTmpPath for %s failed: %v", volID, err)
@@ -157,6 +166,13 @@ func (ns *NodeServer) NodeUnpublishVolume(_ context.Context, req *csi.NodeUnpubl
 	}
 
 	volID := req.GetVolumeId()
+	if ok := ns.inFlight.Insert(volID); !ok {
+		return nil, status.Errorf(codes.Aborted, "An operation with the given Volume %s already exists", volID)
+	}
+	defer func() {
+		klog.V(4).InfoS("NodeUnpublishVolume: volume operation finished", "volumeID", volID)
+		ns.inFlight.Delete(volID)
+	}()
 	targetPath := req.GetTargetPath()
 
 	if err := util.DefaultMounter.Unmount(targetPath); err != nil {
@@ -183,16 +199,6 @@ func (ns *NodeServer) NodeUnstageVolume(_ context.Context, req *csi.NodeUnstageV
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-// NodeGetVolumeStats get volume stats
-func (ns *NodeServer) NodeGetVolumeStats(_ context.Context, req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
-}
-
-// NodeExpandVolume node expand volume
-func (ns *NodeServer) NodeExpandVolume(_ context.Context, _ *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
-}
-
 // NodeGetCapabilities return the capabilities of the Node plugin
 func (ns *NodeServer) NodeGetCapabilities(_ context.Context, _ *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
 	return &csi.NodeGetCapabilitiesResponse{
@@ -203,6 +209,13 @@ func (ns *NodeServer) NodeGetCapabilities(_ context.Context, _ *csi.NodeGetCapab
 // NodeGetInfo return info of the node on which this plugin is running
 func (ns *NodeServer) NodeGetInfo(_ context.Context, _ *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
 	return &csi.NodeGetInfoResponse{
+		NodeId: ns.d.NodeID,
+	}, nil
+}
+
+// NodeGetId return id of the node on which this plugin is running
+func (ns *NodeServer) NodeGetId(ctx context.Context, req *csi.NodeGetIdRequest) (*csi.NodeGetIdResponse, error) {
+	return &csi.NodeGetIdResponse{
 		NodeId: ns.d.NodeID,
 	}, nil
 }

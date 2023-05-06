@@ -19,7 +19,7 @@ package tos
 import (
 	csicommon "github.com/volcengine/volcengine-csi-driver/pkg/csi-common"
 
-	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/container-storage-interface/spec/lib/go/csi/v0"
 	"k8s.io/klog/v2"
 )
 

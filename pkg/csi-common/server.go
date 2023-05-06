@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/container-storage-interface/spec/lib/go/csi/v0"
 	"google.golang.org/grpc"
 	"k8s.io/klog/v2"
 )

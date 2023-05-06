@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/container-storage-interface/spec/lib/go/csi"
 	"golang.org/x/sys/unix"
 	"k8s.io/klog/v2"
 )
@@ -139,34 +138,6 @@ func CreateDest(dest string) error {
 		return fmt.Errorf("%v already exist but it's not a directory", dest)
 	}
 	return nil
-}
-
-// GetMetrics get path metric
-func GetMetrics(path string) (*csi.NodeGetVolumeStatsResponse, error) {
-	if path == "" {
-		return nil, fmt.Errorf("getMetrics No path given")
-	}
-	available, capacity, usage, inodes, inodesFree, inodesUsed, err := FsInfo(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return &csi.NodeGetVolumeStatsResponse{
-		Usage: []*csi.VolumeUsage{
-			{
-				Available: available,
-				Total:     capacity,
-				Used:      usage,
-				Unit:      csi.VolumeUsage_BYTES,
-			},
-			{
-				Available: inodesFree,
-				Total:     inodes,
-				Used:      inodesUsed,
-				Unit:      csi.VolumeUsage_INODES,
-			},
-		},
-	}, nil
 }
 
 // FsInfo linux returns (available bytes, byte capacity, byte usage, total inodes, inodes free, inode usage, error)
