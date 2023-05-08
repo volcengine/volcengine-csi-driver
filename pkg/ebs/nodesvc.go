@@ -394,7 +394,7 @@ func (ns *NodeSvc) NodeGetCapabilities(_ context.Context, _ *csi.NodeGetCapabili
 func (ns *NodeSvc) NodeGetInfo(_ context.Context, _ *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
 	resp := &csi.NodeGetInfoResponse{
 		NodeId:             ns.d.NodeID,
-		MaxVolumesPerNode:  ns.d.maxVolumesPerNode,
+		MaxVolumesPerNode:  ns.d.maxVolumesPerNode - ns.d.reserveVolumesPerNode,
 		AccessibleTopology: &csi.Topology{Segments: ns.cloud.Topology()},
 	}
 	return resp, nil

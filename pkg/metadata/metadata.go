@@ -28,6 +28,7 @@ import (
 
 type MetadataService interface {
 	NodeId() string
+	InstanceType() string
 	Region() string
 	Zone() string
 	Credential() (accessKeyId, secretAccessKey, securityToken string)
@@ -51,6 +52,15 @@ func (e *ecsMetadataService) NodeId() string {
 		return ""
 	}
 	return nodeId
+}
+
+func (e *ecsMetadataService) InstanceType() string {
+	instanceType, err := util.HttpGet(fmt.Sprintf("%s/%s", e.metadataURL, "instance_type"))
+	if err != nil {
+		klog.Errorf("Get instanceType from ecs metadata server failed: %v", err)
+		return ""
+	}
+	return instanceType
 }
 
 func (e *ecsMetadataService) Region() string {

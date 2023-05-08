@@ -37,7 +37,6 @@ const (
 	volumeTypeDefault     = "ESSD_PL0"
 	zoneIdKey             = "zone"
 	filesystemLosePercent = 0.9
-	nodeVolumesNumLimit   = 15
 )
 
 type ControllerSvc struct {
@@ -242,8 +241,8 @@ func (cs *ControllerSvc) ControllerPublishVolume(ctx context.Context, req *csi.C
 		klog.Errorf("get node %s by id for volume %s failed: %s", req.NodeId, req.VolumeId, err)
 		return nil, status.Errorf(codes.NotFound, "get node by id %s failed", req.NodeId)
 	}
-	if len(nodeInfo.Volumes) >= nodeVolumesNumLimit {
-		return nil, status.Errorf(codes.FailedPrecondition, "volume attached to the node exceed limit %v", nodeVolumesNumLimit)
+	if len(nodeInfo.Volumes) >= int(cs.d.maxVolumesPerNode) {
+		return nil, status.Errorf(codes.FailedPrecondition, "volume attached to the node exceed limit %v", cs.d.maxVolumesPerNode)
 	}
 	// check volumeType
 	volumeTypeMatch := false

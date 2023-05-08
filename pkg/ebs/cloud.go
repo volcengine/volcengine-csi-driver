@@ -519,6 +519,32 @@ func (volc *VolcEngin) NodeById(ctx context.Context, id string) (*types.Instance
 	return resp.Instances[0], nil
 }
 
+func (volc *VolcEngin) DescribeInstanceTypes(ctx context.Context, typeName string) (*types.InstanceTypeForDescribeInstanceTypesOutput, error) {
+	info := universal.RequestUniversal{
+		ServiceName: "ecs",
+		Action:      "DescribeInstanceTypes",
+		Version:     "2020-04-01",
+		HttpMethod:  universal.GET,
+	}
+	req := &types.DescribeInstanceTypesInput{
+		InstanceTypes: []*string{&typeName},
+	}
+	resp := &types.DescribeInstanceTypesOutput{}
+	err := volc.svcClients.UniversalClient.DoCallWithType(info, req, resp)
+	if err != nil {
+		return nil, fmt.Errorf("get instance by id failed: %w", err)
+	}
+
+	if resp == nil || len(resp.InstanceTypes) == 0 {
+		return nil, errors.New("not found")
+	}
+
+	if len(resp.InstanceTypes) != 1 {
+		return nil, fmt.Errorf("total count from DescribeInstanceTypes resp is expected 1, but got %d", len(resp.InstanceTypes))
+	}
+	return resp.InstanceTypes[0], nil
+}
+
 func (volc *VolcEngin) Region() string {
 	return volc.region
 }

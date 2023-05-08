@@ -35,7 +35,7 @@ import (
 
 func TestSanity(t *testing.T) {
 	// let openapi volumePath to be empty, load openapi from env
-	d := NewDriver("mock.csi.volcengine.com", "v0.0.1.ut", "mock-node", 10)
+	d := NewDriver("mock.csi.volcengine.com", "v0.0.1.ut", "mock-node", 14, 4)
 	fc := newFakeCloud()
 
 	go func() {
@@ -61,6 +61,10 @@ type fakeCloud struct {
 	volumes   map[string]*types.Volume
 	attached  map[string]string
 	snapshots map[string]*types.Snapshot
+}
+
+func (c *fakeCloud) DescribeInstanceTypes(ctx context.Context, typeName string) (*types.InstanceTypeForDescribeInstanceTypesOutput, error) {
+	return nil, nil
 }
 
 func (c *fakeCloud) CreateSnapshot(ctx context.Context, volumeID, snapshotName string) (snapshot *types.Snapshot, err error) {

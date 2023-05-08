@@ -91,6 +91,10 @@ func (f *fakeMetadataService) NodeId() string {
 	return "fake-node-id"
 }
 
+func (f *fakeMetadataService) InstanceType() string {
+	return "fake-instance-type"
+}
+
 func (f *fakeMetadataService) Region() string {
 	return gRegion
 }

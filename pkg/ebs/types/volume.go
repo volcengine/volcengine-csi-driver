@@ -287,3 +287,57 @@ type TagForDescribeVolumesOutput struct {
 
 	Value *string `type:"string"`
 }
+
+type DescribeInstanceTypesInput struct {
+	_ struct{} `type:"structure"`
+
+	InstanceTypeIds []*string `type:"list"`
+
+	InstanceTypes []*string `type:"list"`
+
+	MaxResults *int32 `type:"int32"`
+
+	NextToken *string `type:"string"`
+}
+
+type DescribeInstanceTypesOutput struct {
+	_ struct{} `type:"structure"`
+
+	Metadata *response.ResponseMetadata
+
+	InstanceTypes []*InstanceTypeForDescribeInstanceTypesOutput `type:"list"`
+
+	NextToken *string `type:"string"`
+
+	TotalCount *int32 `type:"int32"`
+}
+
+type InstanceTypeForDescribeInstanceTypesOutput struct {
+	_ struct{} `type:"structure"`
+
+	InstanceTypeFamily *string `type:"string"`
+
+	InstanceTypeId *string `type:"string"`
+
+	LocalVolumes []*LocalVolumeForDescribeInstanceTypesOutput `type:"list"`
+
+	Volume *VolumeForDescribeInstanceTypesOutput `type:"structure"`
+}
+
+type LocalVolumeForDescribeInstanceTypesOutput struct {
+	_ struct{} `type:"structure"`
+
+	Count *int32 `type:"int32"`
+
+	Size *int32 `type:"int32"`
+
+	VolumeType *string `type:"string"`
+}
+
+type VolumeForDescribeInstanceTypesOutput struct {
+	_ struct{} `type:"structure"`
+
+	MaximumCount *int32 `type:"int32"`
+
+	SupportedVolumeTypes []*string `type:"list"`
+}

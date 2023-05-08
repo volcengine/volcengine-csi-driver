@@ -29,11 +29,12 @@ const (
 
 type Driver struct {
 	*csicommon.CSIDriver
-	maxVolumesPerNode int64
+	maxVolumesPerNode     int64
+	reserveVolumesPerNode int64
 }
 
 // NewDriver create the identity/node/controller server and disk driver
-func NewDriver(name, version, nodeId string, maxVolumesPerNode int64) *Driver {
+func NewDriver(name, version, nodeId string, maxVolumesPerNode, reserveVolumesPerNode int64) *Driver {
 	csiDriver := &csicommon.CSIDriver{}
 	csiDriver.Name = DefaultDriverName
 	if name != "" {
@@ -60,8 +61,9 @@ func NewDriver(name, version, nodeId string, maxVolumesPerNode int64) *Driver {
 	})
 
 	return &Driver{
-		CSIDriver:         csiDriver,
-		maxVolumesPerNode: maxVolumesPerNode,
+		CSIDriver:             csiDriver,
+		maxVolumesPerNode:     maxVolumesPerNode,
+		reserveVolumesPerNode: reserveVolumesPerNode,
 	}
 }
 

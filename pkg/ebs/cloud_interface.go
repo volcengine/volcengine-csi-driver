@@ -30,6 +30,7 @@ type Cloud interface {
 	AttachVolume(ctx context.Context, nodeId, volId string) error
 	DetachVolume(ctx context.Context, nodeId, volId string) error
 	NodeById(ctx context.Context, id string) (*types.InstanceForDescribeInstancesOutput, error)
+	DescribeInstanceTypes(ctx context.Context, typeName string) (*types.InstanceTypeForDescribeInstanceTypesOutput, error)
 	VolumeById(ctx context.Context, id string) (vol *types.Volume, err error)
 	VolumeByName(ctx context.Context, name string) (vol *types.Volume, err error)
 	CreateSnapshot(ctx context.Context, volumeID, snapshotName string) (snapshot *types.Snapshot, err error)
