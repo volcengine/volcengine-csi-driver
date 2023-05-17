@@ -1,5 +1,4 @@
 # 火山引擎 Kubernetes CSI 插件
-[![GoReportCard Widget]][GoReportCardResult]
 
 [English](./README.md) | 简体中文
 
