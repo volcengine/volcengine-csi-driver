@@ -36,7 +36,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: cr-cn-guilin-boe.ivolces.com/vke/tos-launcher:v0.1.0
+          image: open-registry-cn-beijing.cr.volces.com/vke/tos-launcher:v0.1.0
           imagePullPolicy: "Always"
           resources:
             limits:

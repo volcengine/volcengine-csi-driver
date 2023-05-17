@@ -32,7 +32,7 @@ spec:
       serviceAccount: csi-tos
       containers:
         - name: csi-attacher
-          image: cr-cn-guilin-boe.ivolces.com/vke/csi-attacher:v0.3.0
+          image: open-registry-cn-beijing.cr.volces.com/vke/csi-attacher:v0.3.0
           args:
             - "--v=3"
             - "--csi-address=$(ADDRESS)"
@@ -44,7 +44,7 @@ spec:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy
         - name: csi-tos-driver
-          image: cr-cn-guilin-boe.ivolces.com/vke/tosplugin:v2.9-k8s-1.11-adapt
+          image: open-registry-cn-beijing.cr.volces.com/vke/tosplugin:v2.9-k8s-1.11-adapt
           imagePullPolicy: Always
           args:
             - "-v=5"
