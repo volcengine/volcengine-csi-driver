@@ -50,7 +50,7 @@ node:
   driver:
     image:
       name: tosplugin
-      tag: v0.3
+      tag: v2.9-k8s-1.11-adapt
 
     livenessProbe:
       failureThreshold: 5

@@ -75,7 +75,7 @@ spec:
               cpu: 10m
               memory: 20Mi
         - name: csi-tos-driver
-          image: cr-cn-guilin-boe.ivolces.com/vke/tosplugin:v0.3
+          image: cr-cn-guilin-boe.ivolces.com/vke/tosplugin:v2.9-k8s-1.11-adapt
           imagePullPolicy: Always
           securityContext:
             privileged: true

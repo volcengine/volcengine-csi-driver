@@ -46,11 +46,6 @@ spec:
               mountPath: /var/lib/csi/sockets/pluginproxy
         - name: csi-tos-driver
           image: {{ .Values.publicConfig.registry }}/{{ .Values.node.driver.image.name }}:{{ .Values.node.driver.image.tag }}
-#          securityContext:
-#            privileged: true
-#            capabilities:
-#              add: [ "SYS_ADMIN" ]
-#            allowPrivilegeEscalation: true
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           args:
             - "-v=5"
