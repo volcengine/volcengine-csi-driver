@@ -10,25 +10,32 @@ Please refer to [driver parameters](../../docs/csi-ebs-parameters.md) for more d
 
 - [Install TOS CSI Driver](../../deploy/tos/README.md)
 
-## Storage Class Usage (Dynamic Provisioning)
+## PV/PVC Usage (Static Provisioning)
 
-- Create a `PersistentVolumeClaim`.
+- Create `PersistentVolume` and `PersistentVolumeClaim` statically.
 
 ```bash
-# Create PVC 
+# Create tos secret
+kubectl create -f ./secret.yaml
+
+# Create PV
+kubectl create -f ./tos-pv.yaml
+
+# Create PVC
 kubectl create -f ./tos-pvc.yaml
 ```
+
 
 - Check the status of `PersistentVolume` and `PersistentVolumeClaim`.
 
 ```bash
 # kubectl get pvc
 NAME          STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-csi-tos-pvc   Bound    csi-tos-pv                                 100Gi      RWX                           13s
+csi-tos-pvc   Bound    csi-tos-pv                                 1Gi      RWX                           13s
 
 # kubectl get pv
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM                 STORAGECLASS   REASON   AGE
-csi-tos-pv                                 100Gi      RWX            Retain           Bound   default/csi-tos-pvc                           83d
+pv-tos                                        1Gi      RWX            Retain           Bound   default/csi-tos-pvc                           83d
 ```
 
 ## Pod Usage
