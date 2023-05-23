@@ -114,7 +114,7 @@ func (ns *NodeServer) NodePublishVolume(_ context.Context, req *csi.NodePublishV
 	}
 
 	destPath := filepath.Join(tosTmpPath, subPath)
-	if err = os.Mkdir(destPath, 0750); err != nil && !os.IsExist(err) {
+	if err = os.MkdirAll(destPath, 0750); err != nil {
 		klog.Errorf("Tos Create Sub Directory fail, path: %s, err: %v", destPath, err)
 		return nil, status.Errorf(codes.Internal, "create subPath error: %v", err)
 	}
