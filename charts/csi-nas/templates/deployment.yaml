@@ -61,24 +61,6 @@ spec:
           resources:
             {{- toYaml .Values.controller.provisioner.resources | trim | nindent 12 }}
           {{- end }}
-        - name: csi-attacher
-          image: {{ .Values.publicConfig.registry }}/{{ .Values.controller.attacher.image.name }}:{{ .Values.controller.attacher.image.tag }}
-          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          args:
-            - "--v=2"
-            - "--csi-address=$(ADDRESS)"
-            - "--timeout=120s"
-            - "--leader-election"
-          env:
-            - name: ADDRESS
-              value: /csi/csi.sock
-          volumeMounts:
-            - mountPath: /csi
-              name: socket-dir
-          {{- if .Values.controller.attacher.resources }}
-          resources:
-            {{- toYaml .Values.controller.attacher.resources | trim | nindent 12 }}
-          {{- end }}
         - name: liveness-probe
           image: {{ .Values.publicConfig.registry }}/{{ .Values.controller.liveness.image.name }}:{{ .Values.controller.liveness.image.tag }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}

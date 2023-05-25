@@ -61,10 +61,6 @@ spec:
             - --csi-address=$(ADDRESS)
             - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
             - --v=2
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/sh", "-c", "rm -rf /registration/nas.csi.volcengine.com-reg.sock /csi/csi.sock"]
           env:
             - name: ADDRESS
               value: /csi/csi.sock

@@ -101,7 +101,7 @@ controller:
   driver:
     image:
       name: ebsplugin
-      tag: v2.8
+      tag: v2.10
     livenessProbe:
       failureThreshold: 5
       httpGet:
@@ -151,14 +151,6 @@ node:
         path: /dev
         type: Directory
       name: device-dir
-    - hostPath:
-        path: /sys/bus/scsi/devices
-        type: Directory
-      name: sys-devices-dir
-    - hostPath:
-        path: /sys/class/scsi_host/
-        type: Directory
-      name: scsi-host-dir
 
   liveness:
     image:
@@ -191,7 +183,7 @@ node:
   driver:
     image:
       name: ebsplugin
-      tag: v2.8
+      tag: v2.10
     livenessProbe:
       failureThreshold: 5
       httpGet:
@@ -200,18 +192,6 @@ node:
       initialDelaySeconds: 30
       timeoutSeconds: 10
       periodSeconds: 30
-    volumeMounts:
-      - mountPath: /csi
-        name: socket-dir
-      - mountPath: /var/lib/kubelet/
-        mountPropagation: Bidirectional
-        name: mountpoint-dir
-      - mountPath: /dev
-        name: device-dir
-      - mountPath: /sys/bus/scsi/devices
-        name: sys-devices-dir
-      - mountPath: /sys/class/scsi_host/
-        name: scsi-host-dir
     resources:
       limits:
         cpu: 200m

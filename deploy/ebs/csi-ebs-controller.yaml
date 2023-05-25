@@ -132,7 +132,7 @@ spec:
               cpu: 10m
               memory: 20Mi
         - name: csi-ebs-driver
-          image: cr-cn-guilin-boe.ivolces.com/vke/ebsplugin:v2.8
+          image: cr-cn-guilin-boe.ivolces.com/vke/ebsplugin:v2.10
           imagePullPolicy: Always
           args:
             - "--endpoint=$(CSI_ENDPOINT)"

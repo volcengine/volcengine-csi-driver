@@ -56,27 +56,6 @@ spec:
             requests:
               cpu: 10m
               memory: 20Mi
-        - name: csi-attacher
-          image: cr-cn-beijing.ivolces.com/vke/csi-attacher:v3.4.0
-          imagePullPolicy: Always
-          args:
-            - "--v=2"
-            - "--csi-address=$(ADDRESS)"
-            - "--timeout=120s"
-            - "--leader-election"
-          env:
-            - name: ADDRESS
-              value: /csi/csi.sock
-          volumeMounts:
-            - mountPath: /csi
-              name: socket-dir
-          resources:
-            limits:
-              cpu: 500m
-              memory: 1Gi
-            requests:
-              cpu: 10m
-              memory: 20Mi
         - name: liveness-probe
           image: cr-cn-beijing.ivolces.com/vke/livenessprobe:v2.6.0
           imagePullPolicy: Always

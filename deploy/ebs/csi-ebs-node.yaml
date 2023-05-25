@@ -38,14 +38,6 @@ spec:
             path: /dev
             type: Directory
           name: device-dir
-        - hostPath:
-            path: /sys/bus/scsi/devices
-            type: Directory
-          name: sys-devices-dir
-        - hostPath:
-            path: /sys/class/scsi_host/
-            type: Directory
-          name: scsi-host-dir
       containers:
         - name: liveness-probe
           image: cr-cn-guilin-boe.ivolces.com/vke/livenessprobe:v2.6.0
@@ -96,7 +88,7 @@ spec:
               cpu: 10m
               memory: 20Mi
         - name: csi-ebs-driver
-          image: cr-cn-guilin-boe.ivolces.com/vke/ebsplugin:v2.8
+          image: cr-cn-guilin-boe.ivolces.com/vke/ebsplugin:v2.10
           imagePullPolicy: Always
           args:
             - "--endpoint=$(CSI_ENDPOINT)"
@@ -129,10 +121,6 @@ spec:
               name: mountpoint-dir
             - mountPath: /dev
               name: device-dir
-            - mountPath: /sys/bus/scsi/devices
-              name: sys-devices-dir
-            - mountPath: /sys/class/scsi_host/
-              name: scsi-host-dir
           resources:
             limits:
               cpu: 200m

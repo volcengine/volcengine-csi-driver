@@ -60,19 +60,6 @@ controller:
         cpu: 10m
         memory: 20Mi
 
-  attacher:
-    image:
-      name: csi-attacher
-      tag: v3.4.0
-
-    resources:
-      limits:
-        cpu: 500m
-        memory: 1Gi
-      requests:
-        cpu: 10m
-        memory: 20Mi
-
   liveness:
     image:
       name: livenessprobe
@@ -141,7 +128,7 @@ node:
   liveness:
     image:
       name: livenessprobe
-      tag: v2.2.0
+      tag: v2.6.0
 
     resources:
       limits:

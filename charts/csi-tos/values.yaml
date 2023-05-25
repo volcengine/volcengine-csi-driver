@@ -24,7 +24,7 @@ node:
   liveness:
     image:
       name: livenessprobe
-      tag: v2.2.0
+      tag: v2.6.0
 
     resources:
       limits:
@@ -37,7 +37,7 @@ node:
   registrar:
     image:
       name: csi-node-driver-registrar
-      tag: v2.0.1
+      tag: v2.5.1
 
     resources:
       limits:
@@ -50,7 +50,7 @@ node:
   driver:
     image:
       name: tosplugin
-      tag: v2.8
+      tag: v2.10
 
     livenessProbe:
       failureThreshold: 5

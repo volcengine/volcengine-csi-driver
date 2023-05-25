@@ -4,5 +4,5 @@ kind: CSIDriver
 metadata:
   name: nas.csi.volcengine.com
 spec:
-  attachRequired: true
+  attachRequired: false
   podInfoOnMount: true

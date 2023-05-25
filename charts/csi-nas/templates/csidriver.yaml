@@ -5,5 +5,5 @@ metadata:
   labels:
 {{ include "csi-nas.labels" . | indent 4 }}
 spec:
-  attachRequired: true
+  attachRequired: false
   podInfoOnMount: true

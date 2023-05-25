@@ -51,7 +51,7 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-          image: cr-cn-beijing.ivolces.com/vke/livenessprobe:v2.2.0
+          image: cr-cn-beijing.ivolces.com/vke/livenessprobe:v2.6.0
           imagePullPolicy: Always
           args:
             - --csi-address=/csi/csi.sock
@@ -72,10 +72,6 @@ spec:
             - --csi-address=$(ADDRESS)
             - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
             - --v=2
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/sh", "-c", "rm -rf /registration/nas.csi.volcengine.com-reg.sock /csi/csi.sock"]
           env:
             - name: ADDRESS
               value: /csi/csi.sock
