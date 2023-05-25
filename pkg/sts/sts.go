@@ -17,10 +17,15 @@ limitations under the License.
 package sts
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
+	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -28,6 +33,7 @@ import (
 
 	"github.com/volcengine/volcengine-go-sdk/service/storageebs"
 	"github.com/volcengine/volcengine-go-sdk/volcengine"
+	"github.com/volcengine/volcengine-go-sdk/volcengine/client"
 	"github.com/volcengine/volcengine-go-sdk/volcengine/credentials"
 	"github.com/volcengine/volcengine-go-sdk/volcengine/session"
 	"github.com/volcengine/volcengine-go-sdk/volcengine/universal"
@@ -89,6 +95,7 @@ func NewServiceClients(config *openapi.Config) (*ServiceClients, error) {
 			WithEndpoint(openHostAddress).
 			WithMaxRetries(0).
 			WithDisableSSL(true).
+			WithLogger(newVolcLogger()).
 			WithLogLevel(volcengine.LogInfoWithInputAndOutput)
 		sess, err := session.NewSession(config)
 		if err != nil {
@@ -116,6 +123,7 @@ func NewServiceClients(config *openapi.Config) (*ServiceClients, error) {
 			WithEndpoint(openHostAddress).
 			WithMaxRetries(0).
 			WithDisableSSL(true).
+			WithLogger(newVolcLogger()).
 			WithLogLevel(volcengine.LogInfoWithInputAndOutput)
 		sess, err := session.NewSession(config)
 		if err != nil {
@@ -165,6 +173,7 @@ func (t *token) refreshToken(serviceClients *ServiceClients) {
 			WithCredentials(credentials.NewStaticCredentials(role.AccessKeyId, role.AccessKeySecret, role.SecurityToken)).
 			WithEndpoint(openHostAddress).
 			WithMaxRetries(0).WithDisableSSL(true).
+			WithLogger(newVolcLogger()).
 			WithLogLevel(volcengine.LogInfoWithInputAndOutput)
 		sess, err := session.NewSession(config)
 		if err != nil {
@@ -199,4 +208,39 @@ func getRoleToken(url string) (*Credential, error) {
 	}
 
 	return credential, nil
+}
+
+func getGID() string {
+	b := make([]byte, 64)
+	b = b[:runtime.Stack(b, false)]
+	b = bytes.TrimPrefix(b, []byte("goroutine "))
+	b = b[:bytes.IndexByte(b, ' ')]
+	n, _ := strconv.ParseUint(string(b), 10, 64)
+	return fmt.Sprintf("(t-%v)", n)
+}
+
+func newVolcLogger() *Logger {
+	return &Logger{
+		logger: log.New(os.Stdout, "", log.LstdFlags),
+	}
+}
+
+type Logger struct {
+	logger *log.Logger
+}
+
+func (l *Logger) Log(fields ...interface{}) {
+	if len(fields) > 0 {
+		if v, ok := fields[0].(client.LogStruct); ok {
+			logStruct := v
+			switch logStruct.Type {
+			case "Request":
+				b, _ := json.Marshal(logStruct.Request)
+				l.logger.Println(logStruct.Level, getGID(), logStruct.OperationName, "request", string(b), logStruct.Context)
+			case "Response":
+				b, _ := json.Marshal(logStruct.Response)
+				l.logger.Println(logStruct.Level, getGID(), logStruct.OperationName, "response", string(b), logStruct.Context)
+			}
+		}
+	}
 }
