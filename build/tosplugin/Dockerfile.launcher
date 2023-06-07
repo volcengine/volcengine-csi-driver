@@ -3,13 +3,24 @@ COPY . /go/src/github.com/volcengine/volcengine-csi-driver
 WORKDIR /go/src/github.com/volcengine/volcengine-csi-driver
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o launcher build/tosplugin/launcher.go
 
+FROM phusion/baseimage:focal-1.0.0 as builder2
+CMD ["/sbin/my_init"]
+RUN apt update && apt install --no-install-recommends --no-install-suggests -y autotools-dev g++ git \
+    libcurl4-gnutls-dev libfuse-dev libssl-dev libxml2-dev pkg-config automake make curl fuse libxml2 gdb \
+    pstack strace inetutils-tools iproute2 procps inetutils-ping net-tools telnet curl ca-certificates \
+    && git clone -b dev https://github.com/zstdxxf/s3fs.git /tmp/tosfs && cd /tmp/tosfs && ./autogen.sh \
+    && ./configure && make && make install
+RUN deplist=$(ldd /usr/local/bin/s3fs | awk '{if (match($3,"/")){ printf("%s "),$3 } }') && mkdir /usr/local/s3fs \
+    && cp /usr/local/bin/s3fs /usr/local/s3fs/s3fs && cp $deplist /usr/local/s3fs
+
 FROM phusion/baseimage:focal-1.0.0
 CMD ["/sbin/my_init"]
 COPY build/tosplugin/syslog-ng /etc/logrotate.d/syslog-ng
 RUN apt update && apt install --no-install-recommends --no-install-suggests -y fuse libxml2 gdb pstack strace \
-    inetutils-tools iproute2 procps inetutils-ping net-tools telnet curl ca-certificates s3fs \
+    inetutils-tools iproute2 procps inetutils-ping net-tools telnet curl ca-certificates \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY build/tosplugin/launcher.sh /etc/service/tos-launcher/run
 COPY --from=builder /go/src/github.com/volcengine/volcengine-csi-driver/launcher /bin/launcher
-RUN chmod +x /etc/service/tos-launcher/run && chmod +x /bin/launcher
+COPY --from=builder2 /usr/local/s3fs/* /usr/lib
+RUN chmod +x /etc/service/tos-launcher/run && chmod +x /bin/launcher && mv /usr/lib/s3fs /bin/s3fs && chmod +x /bin/s3fs
