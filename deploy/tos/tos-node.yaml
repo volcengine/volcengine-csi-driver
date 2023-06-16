@@ -36,7 +36,7 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-          image: cr-cn-guilin-boe.ivolces.com/vke/livenessprobe:v2.6.0
+          image: open-registry-cn-beijing.cr.volces.com/vke/livenessprobe:v2.6.0
           imagePullPolicy: Always
           args:
             - --csi-address=/csi/csi.sock
@@ -51,7 +51,7 @@ spec:
               cpu: 10m
               memory: 20Mi
         - name: node-driver-registrar
-          image: cr-cn-guilin-boe.ivolces.com/vke/csi-node-driver-registrar:v2.5.1
+          image: open-registry-cn-beijing.cr.volces.com/vke/csi-node-driver-registrar:v2.5.1
           imagePullPolicy: Always
           args:
             - --csi-address=$(ADDRESS)
@@ -75,7 +75,7 @@ spec:
               cpu: 10m
               memory: 20Mi
         - name: csi-tos-driver
-          image: cr-cn-guilin-boe.ivolces.com/vke/tosplugin:v2.10
+          image: open-registry-cn-beijing.cr.volces.com/vke/tosplugin:v2.10
           imagePullPolicy: Always
           securityContext:
             privileged: true

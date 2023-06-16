@@ -1,5 +1,5 @@
 publicConfig:
-  registry: cr-cn-beijing.ivolces.com/vke
+  registry: open-registry-cn-beijing.cr.volces.com/vke
   deployNodeType: ""
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   # affinity -- Affinity for pod assignment

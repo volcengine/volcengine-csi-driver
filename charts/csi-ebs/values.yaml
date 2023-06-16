@@ -1,8 +1,10 @@
 publicConfig:
-  registry: cr-cn-guilin-boe.ivolces.com/vke
+  registry: open-registry-cn-beijing.cr.volces.com/vke
   affinity: {}
   region: ""
   endpoint: ""
+  volcAK: ""
+  volcSK: ""
   ebsDiskType: ""
   isPTSSDWhitelistAccount: false
   deployNodeType: ""

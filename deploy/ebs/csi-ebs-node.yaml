@@ -40,7 +40,7 @@ spec:
           name: device-dir
       containers:
         - name: liveness-probe
-          image: cr-cn-guilin-boe.ivolces.com/vke/livenessprobe:v2.6.0
+          image: open-registry-cn-beijing.cr.volces.com/vke/livenessprobe:v2.6.0
           imagePullPolicy: Always
           args:
             - "--csi-address=/csi/csi.sock"
@@ -57,7 +57,7 @@ spec:
               cpu: 10m
               memory: 20Mi
         - name: node-driver-registrar
-          image: cr-cn-guilin-boe.ivolces.com/vke/csi-node-driver-registrar:v2.5.1
+          image: open-registry-cn-beijing.cr.volces.com/vke/csi-node-driver-registrar:v2.5.1
           imagePullPolicy: Always
           args:
             - "--csi-address=$(ADDRESS)"
@@ -88,7 +88,7 @@ spec:
               cpu: 10m
               memory: 20Mi
         - name: csi-ebs-driver
-          image: cr-cn-guilin-boe.ivolces.com/vke/ebsplugin:v2.10
+          image: open-registry-cn-beijing.cr.volces.com/vke/ebsplugin:v2.10
           imagePullPolicy: Always
           args:
             - "--endpoint=$(CSI_ENDPOINT)"
@@ -108,9 +108,13 @@ spec:
             - name: "CSI_ENDPOINT"
               value: unix:///csi/csi.sock
             - name: "VOLC_REGION"
-              value:
+              value: "cn-guilin-boe"
             - name: "VOLC_HOST"
-              value:
+              value: "open-boe-stable.volcengineapi.com"
+            - name: "VOLC_ACCESSKEYID"
+              value: "volc-akxxxxxxxxxxxxxxxxx"
+            - name: "VOLC_SECRETACCESSKEY"
+              value: "volc-skxxxxxxxxxxxxxxxxx"
           securityContext:
             privileged: true
           volumeMounts:
