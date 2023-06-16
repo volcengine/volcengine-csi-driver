@@ -19,7 +19,13 @@ kubectl create -f ./rbac-csi-ebs-controller.yaml
 kubectl create -f ./csi-ebs-controller.yaml
 ```
 
-> Note: You need to config AKSK info to plugin; Set VOLC_ACCESSKEY, VOLC_SECRETKEY, VOLC_REGION and VOLC_HOST to environment;
+> Note: You need to config AKSK and server info to plugin; Set VOLC_ACCESSKEY, VOLC_SECRETKEY, VOLC_HOST to environment in csi-ebs-driver container.
+
+> VOLC_ACCESSKEY: Access Key ID of VOLC engine IAM uesr, using for invoking volc engine iaas ebs api.   
+
+> VOLC_SECRETKEY: Secret Access Key of VOLC engine IAM uesr, using for invoking volc engine iaas ebs api.
+
+> VOLC_HOST: Host of VOLC engine api server. e.g.,  open.volcengineapi.com
 
 - Step3: Deploy Node Plugin
 
@@ -28,7 +34,7 @@ kubectl create -f ./csi-ebs-controller.yaml
 kubectl create -f ./csi-ebs-node.yaml
 ```
 
-> Note: You need to config AKSK info to plugin; Set VOLC_ACCESSKEY, VOLC_SECRETKEY, VOLC_REGION and VOLC_HOST to environment;
+> Note: You need to config AKSK and server info to plugin too; Set VOLC_ACCESSKEY, VOLC_SECRETKEY, VOLC_HOST to environment in csi-ebs-driver container;
 
 - Step4: Check Status of CSI plugin
 

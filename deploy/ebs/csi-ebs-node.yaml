@@ -107,10 +107,8 @@ spec:
           env:
             - name: "CSI_ENDPOINT"
               value: unix:///csi/csi.sock
-            - name: "VOLC_REGION"
-              value: "cn-guilin-boe"
             - name: "VOLC_HOST"
-              value: "open-boe-stable.volcengineapi.com"
+              value: "open.volcengineapi.com"
             - name: "VOLC_ACCESSKEYID"
               value: "volc-akxxxxxxxxxxxxxxxxx"
             - name: "VOLC_SECRETACCESSKEY"
