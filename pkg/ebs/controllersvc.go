@@ -244,18 +244,6 @@ func (cs *ControllerSvc) ControllerPublishVolume(ctx context.Context, req *csi.C
 	if len(nodeInfo.Volumes) >= int(cs.d.maxVolumesPerNode) {
 		return nil, status.Errorf(codes.FailedPrecondition, "volume attached to the node exceed limit %v", cs.d.maxVolumesPerNode)
 	}
-	// check volumeType
-	volumeTypeMatch := false
-	for _, volumeType := range nodeInfo.InstanceType.VolumeTypes {
-		if *volumeType == vol.VolumeType {
-			volumeTypeMatch = true
-			break
-		}
-	}
-	if !volumeTypeMatch {
-		klog.Errorf("volume: %s, node: %s, volumeType misMatch, volume type: %s, node support types: %+v", req.VolumeId, req.NodeId, vol.VolumeType, nodeInfo.InstanceType.VolumeTypes)
-		return nil, status.Errorf(codes.FailedPrecondition, "volumeType misMatch, volume type: %s, node support types: %+v", vol.VolumeType, nodeInfo.InstanceType.VolumeTypes)
-	}
 
 	err = cs.cloud.AttachVolume(ctx, req.GetNodeId(), req.GetVolumeId())
 	if err != nil {
