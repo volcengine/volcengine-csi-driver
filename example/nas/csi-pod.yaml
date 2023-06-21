@@ -6,7 +6,7 @@ metadata:
 spec:
   containers:
     - name: csi-pod
-      image: cr-stg-cn-beijing.ivolces.com/app/nginx:1.17
+      image: nginx
       command:
         - "/bin/bash"
         - "-c"
