@@ -12,7 +12,7 @@ spec:
     volumeHandle: pv-tos
     volumeAttributes:
       # Replaced by the url of your region.
-      url: "http://tos-s3-cn-boe.ivolces.com"
+      url: "http://tos-s3-cn-beijing.volces.com"
       # Replaced by the bucket name you want to use.
       bucket: "csi-test"
       # Replaced by the subPath in bucket you want to use.
