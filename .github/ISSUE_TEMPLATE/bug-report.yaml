@@ -8,7 +8,7 @@ body:
       label: What happened?
       description: |
         Please provide as much info as possible. Not doing so may result in your bug not being addressed in a timely manner.
-        If this matter is security related, please disclose it privately via https://kubernetes.io/security
+        If this matter is security related, please disclose it privately via https://security.bytedance.com
     validations:
       required: true
 

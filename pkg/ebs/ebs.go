@@ -18,13 +18,10 @@ package ebs
 
 import (
 	csicommon "github.com/volcengine/volcengine-csi-driver/pkg/csi-common"
+	"github.com/volcengine/volcengine-csi-driver/pkg/ebs/consts"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"k8s.io/klog/v2"
-)
-
-const (
-	DefaultDriverName = "ebs.csi.volcengine.com"
 )
 
 type Driver struct {
@@ -36,7 +33,7 @@ type Driver struct {
 // NewDriver create the identity/node/controller server and disk driver
 func NewDriver(name, version, nodeId string, maxVolumesPerNode, reserveVolumesPerNode int64) *Driver {
 	csiDriver := &csicommon.CSIDriver{}
-	csiDriver.Name = DefaultDriverName
+	csiDriver.Name = consts.DriverName
 	if name != "" {
 		csiDriver.Name = name
 	}

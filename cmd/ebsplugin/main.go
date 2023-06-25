@@ -22,6 +22,7 @@ import (
 	"os"
 
 	"github.com/volcengine/volcengine-csi-driver/pkg/ebs"
+	"github.com/volcengine/volcengine-csi-driver/pkg/ebs/consts"
 	"github.com/volcengine/volcengine-csi-driver/pkg/metadata"
 	"github.com/volcengine/volcengine-csi-driver/pkg/openapi"
 	"github.com/volcengine/volcengine-csi-driver/pkg/sts"
@@ -108,13 +109,15 @@ func main() {
 		Run:   run,
 	}
 
-	cmd.Flags().StringVar(&name, "name", "ebs.csi.volcengine.com", "csi driver name")
-	cmd.Flags().StringVar(&endpoint, "endpoint", "unix:///tmp/csi.sock", "csi endpoint")
+	cmd.Flags().StringVar(&name, "name", "ebs.csi.volcengine.com", "csi driver name.")
+	cmd.Flags().StringVar(&endpoint, "endpoint", "unix:///tmp/csi.sock", "csi endpoint.")
 	cmd.Flags().StringVar(&nodeId, "node-id", "", "node id")
-	cmd.Flags().StringVar(&openApiCfgFile, "openapi-file", "/etc/csi/config/volc.yaml", "openapi config file path")
-	cmd.Flags().StringVar(&metadataURL, "metadata-url", "http://100.96.0.96/volcstack/latest", "ecs metadata service url")
+	cmd.Flags().StringVar(&openApiCfgFile, "openapi-file", "/etc/csi/config/volc.yaml", "openapi config file path.")
+	cmd.Flags().StringVar(&metadataURL, "metadata-url", "http://100.96.0.96/volcstack/latest", "ecs metadata service url.")
 	cmd.Flags().BoolVar(&showVersion, "version", false, "Show version.")
-	cmd.Flags().Float64Var(&reserveVolumesFactor, "reserve-volumes-factor", 0.3, "volume attach reserve factor per node, Rounded down. default 0.3")
+	cmd.Flags().Float64Var(&reserveVolumesFactor, "reserve-volumes-factor", 0.3, "volume attach reserve factor per node, Rounded down.")
+	cmd.Flags().StringVar(&consts.TopologyRegionKey, "topology-region-key", consts.TopologyRegionKey, "topology region key for node label and volume affinity.")
+	cmd.Flags().StringVar(&consts.TopologyZoneKey, "topology-zone-key", consts.TopologyZoneKey, "topology zone key for node label and volume affinity.")
 
 	if err := cmd.Execute(); err != nil {
 		klog.Error(err)
