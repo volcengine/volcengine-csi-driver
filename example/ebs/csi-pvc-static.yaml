@@ -8,6 +8,6 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 20Gi
   volumeName: csi-ebs-pv-static  # defined in csi-pv.yaml
   storageClassName: ""

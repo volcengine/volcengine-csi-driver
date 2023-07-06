@@ -5,9 +5,9 @@ metadata:
   name: volcengine-ebs
 provisioner: ebs.csi.volcengine.com
 parameters:
-  type: zenya-ssd
+  type: ESSD_PL0
   fsType: ext4
-  zone: lf-zone-01
+  zone: ""
 reclaimPolicy: Delete
-allowVolumeExpansion: false
+allowVolumeExpansion: true
 volumeBindingMode: Immediate

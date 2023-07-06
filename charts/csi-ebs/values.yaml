@@ -2,10 +2,10 @@ publicConfig:
   registry: open-registry-cn-beijing.cr.volces.com/vke
   affinity: {}
   region: ""
-  endpoint: ""
+  endpoint: "open.volcengineapi.com"
   volcAK: ""
   volcSK: ""
-  ebsDiskType: ""
+  ebsDiskType: "ESSD_PL0"
   isPTSSDWhitelistAccount: false
   deployNodeType: ""
 

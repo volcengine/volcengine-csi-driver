@@ -8,6 +8,6 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 20Gi
   volumeMode: Block
   storageClassName: volcengine-ebs # defined in csi-storageclass.yaml
