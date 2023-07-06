@@ -7,7 +7,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   capacity:
-    storage: 10Gi
+    storage: 20Gi
   csi:
     driver: ebs.csi.volcengine.com
     fsType: ext4
