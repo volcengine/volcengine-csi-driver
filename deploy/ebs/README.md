@@ -51,7 +51,7 @@ kube-system   csi-ebs-node-kbgkm                         3/3     Running   0    
 kubectl create -f ./../../example/ebs/csi-storageclass.yaml
 
 # Create PVC
-kubectl create -f ./../../example/ebs/csi-tos-pvc.yaml
+kubectl create -f ./../../example/ebs/csi-pvc.yaml
 ```
   
 > Please refer to [CSI Driver Example](../../example/ebs/README.md) for more example.
