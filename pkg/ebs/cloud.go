@@ -486,7 +486,7 @@ func (volc *VolcEngin) WaitVolumeBeExtended(ctx context.Context, id string, size
 			return ctx.Err()
 		default:
 			vol, err := volc.VolumeById(ctx, id)
-			if err == nil && vol.Capacity == sizeBytes {
+			if err == nil && vol.Capacity == sizeBytes && vol.Status != types.StatusExtending {
 				// we should wait volume to be extended to sizeBytes, once volume was created, return.
 				return nil
 			}

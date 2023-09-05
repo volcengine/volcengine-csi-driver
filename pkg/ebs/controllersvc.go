@@ -458,11 +458,11 @@ func (cs *ControllerSvc) ControllerExpandVolume(ctx context.Context, req *csi.Co
 		return nil, status.Error(codes.Internal, "expand volume not exist")
 	}
 	requestGb := (volSizeBytes + types.GB - 1) / types.GB // round up
-	if requestGb*types.GB == ebsVolume.Capacity {
+	if requestGb*types.GB == ebsVolume.Capacity && ebsVolume.Status != types.StatusExtending {
 		klog.Infof("ControllerExpandVolume %s: expect size is same with current size: %dGi", volumeId, requestGb)
 		return &csi.ControllerExpandVolumeResponse{CapacityBytes: ebsVolume.Capacity, NodeExpansionRequired: true}, nil
 	}
-	if volSizeBytes < ebsVolume.Capacity {
+	if volSizeBytes < ebsVolume.Capacity && ebsVolume.Status != types.StatusExtending {
 		klog.Infof("ControllerExpandVolume %s: expect size is less than current size: %d, expect size: %d", volumeId, ebsVolume.Capacity, volSizeBytes)
 		return &csi.ControllerExpandVolumeResponse{CapacityBytes: ebsVolume.Capacity, NodeExpansionRequired: true}, nil
 	}

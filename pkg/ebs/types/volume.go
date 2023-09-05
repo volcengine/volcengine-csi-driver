@@ -15,6 +15,7 @@ const (
 	EBSStatusAttached  = "attached"
 	EBSStatusDeleted   = "deleted"
 	EBSStatusDetaching = "detaching"
+	EBSStatusExtending = "extending"
 	EBSStatusUnknown   = "unknown"
 )
 
@@ -25,6 +26,7 @@ const (
 	StatusAttached
 	StatusDeleted
 	StatusDetaching
+	StatusExtending
 	StatusUnknown
 )
 
@@ -76,6 +78,8 @@ func StatusFromString(status string) Status {
 		return StatusDeleted
 	case EBSStatusDetaching:
 		return StatusDetaching
+	case EBSStatusExtending:
+		return StatusExtending
 	}
 	return StatusUnknown
 }
