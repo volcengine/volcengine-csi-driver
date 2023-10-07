@@ -141,6 +141,9 @@ spec:
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           args:
             - "--endpoint=$(CSI_ENDPOINT)"
+            {{- if .Values.controller.enableMetrics }}
+            - --http-endpoint=0.0.0.0:19809
+            {{- end }}
           ports:
           - containerPort: 19808
             name: healthz
