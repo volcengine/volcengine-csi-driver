@@ -19,21 +19,25 @@ package main
 import (
 	"context"
 	"math"
+	"net/http"
 	"os"
 
 	"github.com/volcengine/volcengine-csi-driver/pkg/ebs"
 	"github.com/volcengine/volcengine-csi-driver/pkg/ebs/consts"
+	"github.com/volcengine/volcengine-csi-driver/pkg/ebs/metrics"
 	"github.com/volcengine/volcengine-csi-driver/pkg/metadata"
 	"github.com/volcengine/volcengine-csi-driver/pkg/openapi"
 	"github.com/volcengine/volcengine-csi-driver/pkg/sts"
 
 	"github.com/spf13/cobra"
+	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/klog/v2"
 )
 
 var (
 	name                 string
 	endpoint             string
+	httpEndpoint         string
 	nodeId               string
 	openApiCfgFile       string
 	metadataURL          string
@@ -62,6 +66,19 @@ func run(cmd *cobra.Command, args []string) {
 	if showVersion {
 		klog.Infof("Driver name: %s, version: %s.", name, version)
 		os.Exit(0)
+	}
+
+	metrics.RegisterMetrics()
+	if httpEndpoint != "" {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", legacyregistry.HandlerWithReset())
+		go func() {
+			err := http.ListenAndServe(httpEndpoint, mux)
+			if err != nil {
+				klog.ErrorS(err, "failed to listen & serve metrics", "endpoint", httpEndpoint)
+				klog.FlushAndExit(klog.ExitFlushTimeout, 1)
+			}
+		}()
 	}
 
 	metadataService := metadata.NewECSMetadataService(metadataURL)
@@ -111,6 +128,7 @@ func main() {
 
 	cmd.Flags().StringVar(&name, "name", "ebs.csi.volcengine.com", "csi driver name.")
 	cmd.Flags().StringVar(&endpoint, "endpoint", "unix:///tmp/csi.sock", "csi endpoint.")
+	cmd.Flags().StringVar(&httpEndpoint, "http-endpoint", "", "The TCP network address where the HTTP server for metrics will listen (example: `:8080`). The default is empty string, which means the server is disabled.")
 	cmd.Flags().StringVar(&nodeId, "node-id", "", "node id")
 	cmd.Flags().StringVar(&openApiCfgFile, "openapi-file", "/etc/csi/config/volc.yaml", "openapi config file path.")
 	cmd.Flags().StringVar(&metadataURL, "metadata-url", "http://100.96.0.96/volcstack/latest", "ecs metadata service url.")
