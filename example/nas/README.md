@@ -4,9 +4,12 @@ After the NAS CSI Driver is deployed in your cluster, you can follow this docume
 
 You can use NAS CSI Driver to provision Persistent Volumes statically or dynamically. Please read [Kubernetes Persistent Volumes documentation](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) for more information about Static and Dynamic provisioning.
 
-Please refer to [driver parameters](../../docs/csi-nas-parameters.md) for more detailed usage.
 
 ## Prerequisite
+
+We recommend [Volcengine Kubernetes Engine（VKE](https://www.volcengine.com/product/vke), which will deploy CSI drivers for you automatically.
+
+Alternatively, you can try to deploy it manually on [ECS](https://www.volcengine.com/product/ecs), which is covered by the follow document. We do not provide commercial support for such deployment, however.
 
 - [Install NAS CSI Driver](../../deploy/nas/README.md)
 
