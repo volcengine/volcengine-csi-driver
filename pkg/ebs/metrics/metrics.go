@@ -28,39 +28,39 @@ import (
 var (
 	ebsAPIMetric = metrics.NewHistogramVec(
 		&metrics.HistogramOpts{
-			Name:           "cloudprovider_ebs_api_request_duration_seconds",
-			Help:           "Latency of EBS API calls",
+			Name:           "volc_api_request_duration_seconds",
+			Help:           "Latency of VOLC API calls",
 			StabilityLevel: metrics.ALPHA,
 		},
-		[]string{"request"})
+		[]string{"action", "method", "version"})
 
 	ebsAPIErrorMetric = metrics.NewCounterVec(
 		&metrics.CounterOpts{
-			Name:           "cloudprovider_ebs_api_request_errors",
-			Help:           "EBS API errors",
+			Name:           "volc_api_request_errors",
+			Help:           "VOLC API errors",
 			StabilityLevel: metrics.ALPHA,
 		},
-		[]string{"request"})
+		[]string{"action", "method", "version"})
 
 	ebsAPIThrottlesMetric = metrics.NewCounterVec(
 		&metrics.CounterOpts{
-			Name:           "cloudprovider_ebs_api_throttled_requests_total",
-			Help:           "EBS API throttled requests",
+			Name:           "volc_api_throttled_requests_total",
+			Help:           "VOLC API throttled requests",
 			StabilityLevel: metrics.ALPHA,
 		},
-		[]string{"operation_name"})
+		[]string{"action", "method", "version"})
 )
 
-func RecordEBSMetric(actionName string, timeTaken float64, err error) {
+func RecordEBSMetric(action, method, version string, timeTaken float64, err error) {
 	if err != nil {
-		ebsAPIErrorMetric.With(metrics.Labels{"request": actionName}).Inc()
+		ebsAPIErrorMetric.With(metrics.Labels{"action": action, "method": method, "version": version}).Inc()
 	} else {
-		ebsAPIMetric.With(metrics.Labels{"request": actionName}).Observe(timeTaken)
+		ebsAPIMetric.With(metrics.Labels{"action": action, "method": method, "version": version}).Observe(timeTaken)
 	}
 }
 
-func RecordEBSThrottlesMetric(operation string) {
-	ebsAPIThrottlesMetric.With(metrics.Labels{"operation_name": operation}).Inc()
+func RecordEBSThrottlesMetric(action, method, version string) {
+	ebsAPIThrottlesMetric.With(metrics.Labels{"action": action, "method": method, "version": version}).Inc()
 }
 
 // IsErrorThrottle returns whether the error is to be throttled based on its

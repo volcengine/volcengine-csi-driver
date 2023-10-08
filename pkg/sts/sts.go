@@ -130,9 +130,9 @@ func NewServiceClients(config *openapi.Config) (*ServiceClients, error) {
 				if !ok {
 					klog.Errorf("parse sendTime error")
 				}
-				metrics.RecordEBSMetric(info.Name, time.Since(sendTime).Seconds(), info.Error)
+				metrics.RecordEBSMetric(info.Name, info.Method, info.ClientInfo.APIVersion, time.Since(sendTime).Seconds(), info.Error)
 				if metrics.IsErrorThrottle(info) {
-					metrics.RecordEBSThrottlesMetric(info.Name)
+					metrics.RecordEBSThrottlesMetric(info.Name, info.Method, info.ClientInfo.APIVersion)
 					klog.InfoS("Got RequestLimitExceeded error on EBS request", "request", info.ClientInfo.ServiceName+"::"+info.Name)
 				}
 			},
@@ -195,9 +195,9 @@ func (t *token) refreshToken(serviceClients *ServiceClients) {
 				if !ok {
 					klog.Errorf("parse sendTime error")
 				}
-				metrics.RecordEBSMetric(info.Name, time.Since(sendTime).Seconds(), info.Error)
+				metrics.RecordEBSMetric(info.Name, info.Method, info.ClientInfo.APIVersion, time.Since(sendTime).Seconds(), info.Error)
 				if metrics.IsErrorThrottle(info) {
-					metrics.RecordEBSThrottlesMetric(info.Name)
+					metrics.RecordEBSThrottlesMetric(info.Name, info.Method, info.ClientInfo.APIVersion)
 					klog.InfoS("Got RequestLimitExceeded error on EBS request", "request", info.ClientInfo.ServiceName+"::"+info.Name)
 				}
 			},
