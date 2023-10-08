@@ -14,22 +14,22 @@ The EBS CSI Driver will emit [EBS API](https://www.volcengine.com/docs/26444/434
 
 The metrics will appear in the following format: 
 ```sh
-# HELP cloudprovider_ebs_api_request_duration_seconds [ALPHA] Latency of EBS API calls
-# TYPE cloudprovider_ebs_api_request_duration_seconds histogram
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="0.005"} 0
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="0.01"} 0
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="0.025"} 0
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="0.05"} 0
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="0.1"} 0
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="0.25"} 1
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="0.5"} 1
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="1"} 1
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="2.5"} 1
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="5"} 1
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="10"} 1
-cloudprovider_ebs_api_request_duration_seconds_bucket{request="AttachVolume",le="+Inf"} 1
-cloudprovider_ebs_api_request_duration_seconds_sum{request="AttachVolume"} 0.139376799
-cloudprovider_ebs_api_request_duration_seconds_count{request="AttachVolume"} 1
+# HELP volc_api_request_duration_seconds [ALPHA] Latency of VOLC API calls
+# TYPE volc_api_request_duration_seconds histogram
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="0.005"} 0
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="0.01"} 0
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="0.025"} 0
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="0.05"} 0
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="0.1"} 0
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="0.25"} 1
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="0.5"} 1
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="1"} 1
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="2.5"} 1
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="5"} 1
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="10"} 1
+volc_api_request_duration_seconds_bucket{action="AttachVolume",method="GET",version="2020-04-01",le="+Inf"} 1
+volc_api_request_duration_seconds_sum{action="AttachVolume",method="GET",version="2020-04-01"} 0.170908792
+volc_api_request_duration_seconds_count{action="AttachVolume",method="GET",version="2020-04-01"} 1
 ...
 ```
 
