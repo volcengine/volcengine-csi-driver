@@ -1,5 +1,13 @@
 # Install EBS CSI driver
 
+## Compiling and Package
+the driver can be compiled in a form of a container.
+
+To build a container:
+```
+$  make container CMDS=ebsplugin
+```
+
 ## Install with kubectl
 
 - Step1: Create [CSIDriver](https://kubernetes-csi.github.io/docs/csi-driver-object.html)

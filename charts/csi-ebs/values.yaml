@@ -25,6 +25,8 @@ controller:
   hostNetwork:
     enabled: false
 
+  enableMetrics: false
+
   nodeSelector:
     kubernetes.io/os: linux
 

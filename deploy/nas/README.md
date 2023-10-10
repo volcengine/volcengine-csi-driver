@@ -1,5 +1,13 @@
 # Install NAS CSI driver
 
+## Compiling and Package
+the driver can be compiled in a form of a container.
+
+To build a container:
+```
+$  make container CMDS=nasplugin
+```
+
 ## Install with kubectl
 
 - Step1: Create [CSIDriver](https://kubernetes-csi.github.io/docs/csi-driver-object.html)
@@ -19,16 +27,12 @@ kubectl create -f ./rbac-csi-nas-controller.yaml
 kubectl create -f ./csi-nas-controller.yaml
 ```
 
-> Note: You need to config AKSK info to plugin; Set VOLC_ACCESSKEY, VOLC_SECRETKEY, VOLC_REGION and VOLC_HOST to environment;
-
 - Step3: Deploy Node Plugin
 
 ```bash
 # Create Node Plugin
 kubectl create -f ./csi-nas-node.yaml
 ```
-
-> Note: You need to config AKSK info to plugin; Set VOLC_ACCESSKEY, VOLC_SECRETKEY, VOLC_REGION and VOLC_HOST to environment;
 
 - Step4: Check Status of CSI plugin
 

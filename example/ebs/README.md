@@ -8,6 +8,10 @@ Please refer to [driver parameters](../../docs/csi-ebs-parameters.md) for more d
 
 ## Prerequisite
 
+We recommend [Volcengine Kubernetes Engine（VKE](https://www.volcengine.com/product/vke), which will deploy CSI drivers for you automatically.
+
+Alternatively, you can try to deploy it manually on [ECS](https://www.volcengine.com/product/ecs), which is covered by the follow document. We do not provide commercial support for such deployment, however.
+
 - [Install EBS CSI Driver](../../deploy/ebs/README.md)
 
 ## Storage Class Usage (Dynamic Provisioning)

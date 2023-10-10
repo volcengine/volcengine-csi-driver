@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/volcengine/volcengine-csi-driver/pkg/ebs/metrics"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -35,6 +36,7 @@ import (
 	"github.com/volcengine/volcengine-go-sdk/volcengine"
 	"github.com/volcengine/volcengine-go-sdk/volcengine/client"
 	"github.com/volcengine/volcengine-go-sdk/volcengine/credentials"
+	"github.com/volcengine/volcengine-go-sdk/volcengine/custom"
 	"github.com/volcengine/volcengine-go-sdk/volcengine/session"
 	"github.com/volcengine/volcengine-go-sdk/volcengine/universal"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -84,12 +86,13 @@ func NewServiceClients(config *openapi.Config) (*ServiceClients, error) {
 	}
 	var universalClient *universal.Universal
 	var ebsClient *storageebs.STORAGEEBS
+	var volcConfig *volcengine.Config
 	if config.Host != "" {
 		openHostAddress = config.Host
 	}
 	if config.SecretAccessKey != "" && config.AccessKeyId != "" {
 		klog.Info("NewServiceClients with user ak/sk.")
-		config := volcengine.NewConfig().
+		volcConfig = volcengine.NewConfig().
 			WithRegion(config.Region).
 			WithCredentials(credentials.NewStaticCredentials(config.AccessKeyId, config.SecretAccessKey, "")).
 			WithEndpoint(openHostAddress).
@@ -97,12 +100,6 @@ func NewServiceClients(config *openapi.Config) (*ServiceClients, error) {
 			WithDisableSSL(true).
 			WithLogger(newVolcLogger()).
 			WithLogLevel(volcengine.LogInfoWithInputAndOutput)
-		sess, err := session.NewSession(config)
-		if err != nil {
-			panic(err)
-		}
-		ebsClient = storageebs.New(sess)
-		universalClient = universal.New(sess)
 	} else {
 		//
 		klog.Info("NewServiceClients with sts.")
@@ -117,22 +114,37 @@ func NewServiceClients(config *openapi.Config) (*ServiceClients, error) {
 		t.auth = role
 		t.active = true
 		// init all client with token method.
-		config := volcengine.NewConfig().
+		volcConfig = volcengine.NewConfig().
 			WithRegion(config.Region).
 			WithCredentials(credentials.NewStaticCredentials(role.AccessKeyId, role.AccessKeySecret, role.SecurityToken)).
 			WithEndpoint(openHostAddress).
 			WithMaxRetries(0).
 			WithDisableSSL(true).
 			WithLogger(newVolcLogger()).
-			WithLogLevel(volcengine.LogInfoWithInputAndOutput)
-		sess, err := session.NewSession(config)
-		if err != nil {
-			panic(err)
-		}
-		ebsClient = storageebs.New(sess)
-		universalClient = universal.New(sess)
+			WithLogLevel(volcengine.LogInfoWithInputAndOutput).AddInterceptor(custom.SdkInterceptor{
+			Before: func(info custom.RequestInfo) interface{} {
+				return time.Now()
+			},
+			After: func(info custom.RequestInfo, i interface{}) {
+				sendTime, ok := i.(time.Time)
+				if !ok {
+					klog.Errorf("parse sendTime error")
+				}
+				metrics.RecordEBSMetric(info.Name, info.Method, info.ClientInfo.APIVersion, time.Since(sendTime).Seconds(), info.Error)
+				if metrics.IsErrorThrottle(info) {
+					metrics.RecordEBSThrottlesMetric(info.Name, info.Method, info.ClientInfo.APIVersion)
+					klog.InfoS("Got RequestLimitExceeded error on EBS request", "request", info.ClientInfo.ServiceName+"::"+info.Name)
+				}
+			},
+		})
 	}
 
+	sess, err := session.NewSession(volcConfig)
+	if err != nil {
+		panic(err)
+	}
+	ebsClient = storageebs.New(sess)
+	universalClient = universal.New(sess)
 	if t.active {
 		// refresh client periodically.
 		go wait.Until(func() {
@@ -174,7 +186,22 @@ func (t *token) refreshToken(serviceClients *ServiceClients) {
 			WithEndpoint(openHostAddress).
 			WithMaxRetries(0).WithDisableSSL(true).
 			WithLogger(newVolcLogger()).
-			WithLogLevel(volcengine.LogInfoWithInputAndOutput)
+			WithLogLevel(volcengine.LogInfoWithInputAndOutput).AddInterceptor(custom.SdkInterceptor{
+			Before: func(info custom.RequestInfo) interface{} {
+				return time.Now()
+			},
+			After: func(info custom.RequestInfo, i interface{}) {
+				sendTime, ok := i.(time.Time)
+				if !ok {
+					klog.Errorf("parse sendTime error")
+				}
+				metrics.RecordEBSMetric(info.Name, info.Method, info.ClientInfo.APIVersion, time.Since(sendTime).Seconds(), info.Error)
+				if metrics.IsErrorThrottle(info) {
+					metrics.RecordEBSThrottlesMetric(info.Name, info.Method, info.ClientInfo.APIVersion)
+					klog.InfoS("Got RequestLimitExceeded error on EBS request", "request", info.ClientInfo.ServiceName+"::"+info.Name)
+				}
+			},
+		})
 		sess, err := session.NewSession(config)
 		if err != nil {
 			panic(err)
