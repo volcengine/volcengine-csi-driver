@@ -28,6 +28,11 @@ TOS CSI Plugin support TOS bucket mount, but does not support provision volume. 
 
 More detail information pls refer to [TOS](./example/tos/README.md).
 
+## Security and privacy
+
+This project takes security seriously.
+For vulnerability reporting and supported versions, see [SECURITY.md](SECURITY.md)
+
 ## Community, discussion, contribution, and support
 
 Learn how to engage with the Kubernetes community on the [community page](https://kubernetes.io/community/).
