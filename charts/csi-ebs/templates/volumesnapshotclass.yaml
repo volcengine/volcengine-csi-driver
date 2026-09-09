@@ -1,0 +1,8 @@
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: csi-ebs
+  labels:
+    {{- include "csi-ebs.common.labels" . | nindent 4 }}
+driver: ebs.csi.volcengine.com
+deletionPolicy: Delete

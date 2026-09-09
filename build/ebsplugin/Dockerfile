@@ -6,7 +6,7 @@ RUN make build-linux CMDS=ebsplugin
 FROM debian:bullseye
 COPY --from=builder /go/src/github.com/volcengine/volcengine-csi-driver/bin/ebsplugin /ebsplugin
 RUN apt-get update &&  \
-    apt-get -y install ca-certificates mount && \
+    apt-get -y install ca-certificates mount e2fsprogs xfsprogs && \
     apt-get clean all && \
     chmod +x /ebsplugin
 ENTRYPOINT ["/ebsplugin"]

@@ -112,10 +112,6 @@ spec:
               name: mountpoint-dir
             - mountPath: /dev
               name: device-dir
-            - mountPath: /sys/bus/scsi/devices
-              name: sys-devices-dir
-            - mountPath: /sys/class/scsi_host/
-              name: scsi-host-dir
           {{- if .Values.node.driver.resources }}
           resources:
             {{- toYaml .Values.node.driver.resources | trim | nindent 12 }}

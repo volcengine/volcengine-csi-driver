@@ -80,7 +80,7 @@ func (volc *VolcEngin) CreateVolume(ctx context.Context, name, volumeType, zoneI
 		return "", errors.New("created volume failed from ebs with nil VolumeId")
 	}
 
-	if resp.Metadata.Error != nil {
+	if resp.Metadata != nil && resp.Metadata.Error != nil {
 		return "", fmt.Errorf("created volume error: %v, req: %v", resp.Metadata.Error, req)
 	}
 
@@ -114,7 +114,7 @@ func (volc *VolcEngin) ExtendVolume(ctx context.Context, id string, newSize int6
 		return errors.New("extend volume failed from ebs with nil resp")
 	}
 
-	if resp.Metadata.Error != nil {
+	if resp.Metadata != nil && resp.Metadata.Error != nil {
 		return fmt.Errorf("extend volume error: %v, req: %v", resp.Metadata.Error, req)
 	}
 
@@ -138,7 +138,7 @@ func (volc *VolcEngin) DeleteVolume(ctx context.Context, id string) error {
 		return fmt.Errorf("delete volume by id %s failed: %w", id, err)
 	}
 
-	if resp != nil && resp.Metadata.Error != nil {
+	if resp != nil && resp.Metadata != nil && resp.Metadata.Error != nil {
 		return fmt.Errorf("delete volume error: %v, id: %v", resp.Metadata.Error, id)
 	}
 
@@ -167,7 +167,7 @@ func (volc *VolcEngin) AttachVolume(ctx context.Context, nodeId, volId string) e
 		return fmt.Errorf("attach volume %v to instance %v error: %w", volId, nodeId, err)
 	}
 
-	if resp != nil && resp.Metadata.Error != nil {
+	if resp != nil && resp.Metadata != nil && resp.Metadata.Error != nil {
 		return fmt.Errorf("attach volume %v to instance %v error: %v", volId, nodeId, resp.Metadata.Error)
 	}
 
@@ -187,7 +187,7 @@ func (volc *VolcEngin) DetachVolume(ctx context.Context, nodeId, volId string) e
 		return fmt.Errorf("detach volume %v to instance %v error: %w", volId, nodeId, err)
 	}
 
-	if resp != nil && resp.Metadata.Error != nil {
+	if resp != nil && resp.Metadata != nil && resp.Metadata.Error != nil {
 		return fmt.Errorf("detach volume %v to instance %v error: %v", volId, nodeId, resp.Metadata.Error)
 	}
 
@@ -218,7 +218,7 @@ func (volc *VolcEngin) VolumeById(ctx context.Context, id string) (vol *types.Vo
 		return nil, errors.New("response from volc stack is nil")
 	}
 
-	if resp.Metadata.Error != nil {
+	if resp.Metadata != nil && resp.Metadata.Error != nil {
 		return nil, fmt.Errorf("get volume by id %s error: %v", id, resp.Metadata.Error)
 	}
 
@@ -269,7 +269,7 @@ func (volc *VolcEngin) VolumeByName(ctx context.Context, name string) (vol *type
 		return nil, errors.New("response from volc stack is nil")
 	}
 
-	if resp.Metadata.Error != nil {
+	if resp.Metadata != nil && resp.Metadata.Error != nil {
 		return nil, fmt.Errorf("get volume by name %s error: %v", name, resp.Metadata.Error)
 	}
 
@@ -321,7 +321,7 @@ func (volc *VolcEngin) CreateSnapshot(ctx context.Context, volumeID, snapshotNam
 		return nil, fmt.Errorf("CreateSnapshot error: %w, req: %v", err, req)
 	}
 
-	if resp.Metadata.Error != nil {
+	if resp.Metadata != nil && resp.Metadata.Error != nil {
 		return nil, fmt.Errorf("CreateSnapshot error: %v, req: %v", resp.Metadata.Error, req)
 	}
 	return &types.Snapshot{
@@ -348,7 +348,7 @@ func (volc *VolcEngin) DeleteSnapshot(ctx context.Context, snapshotID string) er
 		return fmt.Errorf("DeleteSnapshot %s error: %s", snapshotID, err)
 	}
 
-	if resp.Metadata.Error != nil {
+	if resp.Metadata != nil && resp.Metadata.Error != nil {
 		return fmt.Errorf("DeleteSnapshot %s error: %s", snapshotID, err)
 	}
 	return nil
@@ -372,7 +372,7 @@ func (volc *VolcEngin) GetSnapshotByName(ctx context.Context, name string) (snap
 		return nil, fmt.Errorf("GetSnapshotByName %s failed: %w", name, err)
 	}
 
-	if resp.Metadata.Error != nil {
+	if resp.Metadata != nil && resp.Metadata.Error != nil {
 		return nil, fmt.Errorf("GetSnapshotByName %s error: %v", name, resp.Metadata.Error)
 	}
 
@@ -428,7 +428,7 @@ func (volc *VolcEngin) GetSnapshotByID(ctx context.Context, snapshotID string) (
 		return nil, fmt.Errorf("GetSnapshotByID %s failed: %w", snapshotID, err)
 	}
 
-	if resp.Metadata.Error != nil {
+	if resp.Metadata != nil && resp.Metadata.Error != nil {
 		return nil, fmt.Errorf("GetSnapshotByID %s error: %v", snapshotID, resp.Metadata.Error)
 	}
 
