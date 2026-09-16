@@ -1,0 +1,13 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: volcengine-ebs-tags
+provisioner: ebs.csi.volcengine.com
+parameters:
+  type: ESSD_PL0
+  csi.storage.k8s.io/fstype: xfs
+  # VKE-compatible format: key|value,key|value.
+  tags: "team|storage,env|test"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer

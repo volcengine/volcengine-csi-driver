@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -51,7 +52,7 @@ func NewVolcEngin(svcClients *sts.ServiceClients, region, zone string) *VolcEngi
 
 var _ Cloud = &VolcEngin{}
 
-func (volc *VolcEngin) CreateVolume(ctx context.Context, name, volumeType, zoneId, snapshotId string, capacity int64) (id string, err error) {
+func (volc *VolcEngin) CreateVolume(ctx context.Context, name, volumeType, zoneId, snapshotId string, capacity int64, tags map[string]string) (id string, err error) {
 	info := universal.RequestUniversal{
 		ServiceName: "storage_ebs",
 		Action:      "CreateVolume",
@@ -69,6 +70,18 @@ func (volc *VolcEngin) CreateVolume(ctx context.Context, name, volumeType, zoneI
 		Size:       volcengine.JsonNumber(strconv.FormatInt(sizeGB, 10)),
 		ZoneId:     &zoneId,
 		SnapshotId: &snapshotId,
+	}
+	// Keep the indexed tag parameters stable across retries.
+	keys := make([]string, 0, len(tags))
+	for key := range tags {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		req.Tags = append(req.Tags, &types.TagForCreateVolumeInput{
+			Key:   volcengine.String(key),
+			Value: volcengine.String(tags[key]),
+		})
 	}
 	resp := &types.CreateVolumeOutput{}
 	err = volc.svcClients.UniversalClient.DoCallWithType(info, req, resp)

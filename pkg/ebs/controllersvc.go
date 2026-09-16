@@ -19,6 +19,7 @@ package ebs
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/volcengine/volcengine-csi-driver/pkg/ebs/consts"
 	"github.com/volcengine/volcengine-csi-driver/pkg/ebs/types"
@@ -36,7 +37,10 @@ const (
 	volumeTypeKey         = "type"
 	volumeTypeDefault     = "ESSD_PL0"
 	zoneIdKey             = "zone"
+	tagsKey               = "tags"
 	filesystemLosePercent = 0.9
+	defaultCreatedByKey   = "createdby"
+	defaultCreatedByValue = "volcengine-ebs-csi-driver"
 )
 
 type ControllerSvc struct {
@@ -71,6 +75,11 @@ func (cs *ControllerSvc) CreateVolume(ctx context.Context, req *csi.CreateVolume
 	capacity := defaultCapacity
 	if cr := req.GetCapacityRange(); cr != nil && cr.GetRequiredBytes() != 0 {
 		capacity = cr.GetRequiredBytes()
+	}
+
+	userTags, err := getTags(req)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "parse user tags failed: %v", err)
 	}
 
 	zoneId := getZoneId(req)
@@ -141,7 +150,7 @@ func (cs *ControllerSvc) CreateVolume(ctx context.Context, req *csi.CreateVolume
 	}
 
 	// if volume is not already existed
-	volID, err := cs.cloud.CreateVolume(ctx, req.GetName(), volumeType, zoneId, snapshotID, capacity)
+	volID, err := cs.cloud.CreateVolume(ctx, req.GetName(), volumeType, zoneId, snapshotID, capacity, userTags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create volume %v: %w", req.GetName(), err)
 	}
@@ -491,6 +500,27 @@ func getVolumeTypeWithDefault(req *csi.CreateVolumeRequest) string {
 		return volumeType
 	}
 	return volumeTypeDefault
+}
+
+// getTags follows the VKE StorageClass format: key|value,key|value.
+func getTags(req *csi.CreateVolumeRequest) (map[string]string, error) {
+	tagsMap := map[string]string{defaultCreatedByKey: defaultCreatedByValue}
+	tags := req.GetParameters()[tagsKey]
+	if tags == "" {
+		return tagsMap, nil
+	}
+
+	for i, tag := range strings.Split(tags, ",") {
+		key, value, found := strings.Cut(tag, "|")
+		if !found {
+			return nil, fmt.Errorf("invalid tags format at entry %d: expected key|value", i+1)
+		}
+		if strings.HasPrefix(key, "volc:") || strings.HasPrefix(key, "sys:") {
+			return nil, fmt.Errorf("reserved tag key prefix at entry %d: volc: and sys: are not allowed", i+1)
+		}
+		tagsMap[key] = value
+	}
+	return tagsMap, nil
 }
 
 func getZoneId(req *csi.CreateVolumeRequest) string {

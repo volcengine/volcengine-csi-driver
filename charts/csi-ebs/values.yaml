@@ -3,6 +3,8 @@ publicConfig:
   affinity: {}
   region: ""
   endpoint: "open.volcengineapi.com"
+  # Set an ECS instance role name to use role credentials instead of volcAK/volcSK.
+  assumeRoleName: ""
   volcAK: ""
   volcSK: ""
   ebsDiskType: "ESSD_PL0"
