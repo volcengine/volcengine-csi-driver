@@ -81,6 +81,18 @@ func (cs *ControllerSvc) CreateVolume(ctx context.Context, req *csi.CreateVolume
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "parse user tags failed: %v", err)
 	}
+	formatOptions, err := parseMkfsOptions(req.GetParameters()[consts.MkfsOptions])
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid mkfsOptions: %v", err)
+	}
+
+	if len(formatOptions) > 0 {
+		for _, capability := range req.GetVolumeCapabilities() {
+			if capability.GetMount() == nil {
+				return nil, status.Error(codes.InvalidArgument, "mkfsOptions requires a filesystem volume")
+			}
+		}
+	}
 
 	zoneId := getZoneId(req)
 	if zoneId == "" {
@@ -107,6 +119,9 @@ func (cs *ControllerSvc) CreateVolume(ctx context.Context, req *csi.CreateVolume
 	}
 	volumeContext := map[string]string{}
 	volumeContext[consts.SnapshotID] = snapshotID
+	if len(formatOptions) > 0 {
+		volumeContext[consts.MkfsOptions] = req.GetParameters()[consts.MkfsOptions]
+	}
 
 	vol, err := cs.cloud.VolumeByName(ctx, req.GetName())
 	if err != nil {

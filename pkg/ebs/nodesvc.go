@@ -79,6 +79,15 @@ func (ns *NodeSvc) NodeStageVolume(_ context.Context, req *csi.NodeStageVolumeRe
 	if !ns.isValidVolumeCapabilities([]*csi.VolumeCapability{volCap}) {
 		return nil, status.Error(codes.InvalidArgument, "Volume capability not supported")
 	}
+	formatOptions, err := parseMkfsOptions(req.GetVolumeContext()[consts.MkfsOptions])
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid mkfsOptions: %v", err)
+	}
+	if len(formatOptions) > 0 {
+		if volCap.GetMount() == nil {
+			return nil, status.Error(codes.InvalidArgument, "mkfsOptions requires a filesystem volume")
+		}
+	}
 
 	// If the access type is block, do nothing for stage
 	switch volCap.GetAccessType().(type) {
@@ -125,7 +134,7 @@ func (ns *NodeSvc) NodeStageVolume(_ context.Context, req *csi.NodeStageVolumeRe
 	if req.GetVolumeCapability().GetMount().FsType != "" {
 		fsType = req.GetVolumeCapability().GetMount().FsType
 	}
-	err = ns.mounter.FormatAndMount(devicePath, targetPath, fsType, opts)
+	err = ns.mounter.FormatAndMountWithOptions(devicePath, targetPath, fsType, opts, formatOptions)
 	if err != nil {
 		errMsg := fmt.Sprintf("failed to mount device path (%s) to staging path (%s) for volume (%s), error: %s",
 			devicePath,

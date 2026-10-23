@@ -3,7 +3,8 @@ package consts
 const (
 	DriverName = "ebs.csi.volcengine.com"
 
-	SnapshotID = "snapshotID"
+	SnapshotID  = "snapshotID"
+	MkfsOptions = "mkfsOptions"
 )
 
 var (

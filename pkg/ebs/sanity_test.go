@@ -240,7 +240,7 @@ func newFakeMounter() *fakeMounter {
 	}
 }
 
-func (f *fakeMounter) FormatAndMount(source string, target string, fstype string, options []string) error {
+func (f *fakeMounter) FormatAndMountWithOptions(source string, target string, fstype string, options, formatOptions []string) error {
 	// formats the given disk, do nothing
 
 	if err := f.Mount(source, target, fstype, options); err != nil {

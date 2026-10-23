@@ -7,6 +7,26 @@ There are several optional parameters that may be passed into `CreateVolumeReque
 | "type"     | ESSD_PL0, PTSSD       | ESSD_PL0| EBS volume type.                                                                                                                                 |
 | "zone"     |                       |         | Which zone EBS volume will be created. If empty, csi will choose one zone randomly. If use WaitForFirstConsumer model, you should make it empty! |
 | "tags"     | `key1\|value1,key2\|value2` | None | User tags applied to newly created EBS volumes. The parameter name and tag keys/values are case sensitive. |
+| "mkfsOptions" | JSON array of strings | None | Additional filesystem formatting arguments. See [Filesystem formatting options](#filesystem-formatting-options). |
+
+## Filesystem formatting options
+
+`mkfsOptions` passes additional arguments to `mkfs.<fstype>` when formatting a new
+filesystem. The value is a JSON array encoded as a string, with one argument per
+element.
+
+```yaml
+parameters:
+  csi.storage.k8s.io/fstype: xfs
+  mkfsOptions: '["-m","inobtcount=0,bigtime=0","-i","nrext64=0"]'
+```
+
+- Applies to filesystem volumes when the driver detects an unformatted device.
+- Does not modify an existing filesystem or apply to raw block volumes.
+- Omitting the parameter or using an empty string or `[]` keeps the default behavior.
+- Use StorageClass `mountOptions` separately for mount-time options.
+
+See the [StorageClass example](../example/ebs/csi-storageclass-mkfs-options.yaml).
 
 ## Volume tags
 
