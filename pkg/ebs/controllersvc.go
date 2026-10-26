@@ -19,6 +19,7 @@ package ebs
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/volcengine/volcengine-csi-driver/pkg/ebs/consts"
 	"github.com/volcengine/volcengine-csi-driver/pkg/ebs/types"
@@ -36,7 +37,10 @@ const (
 	volumeTypeKey         = "type"
 	volumeTypeDefault     = "ESSD_PL0"
 	zoneIdKey             = "zone"
+	tagsKey               = "tags"
 	filesystemLosePercent = 0.9
+	defaultCreatedByKey   = "createdby"
+	defaultCreatedByValue = "volcengine-ebs-csi-driver"
 )
 
 type ControllerSvc struct {
@@ -73,6 +77,23 @@ func (cs *ControllerSvc) CreateVolume(ctx context.Context, req *csi.CreateVolume
 		capacity = cr.GetRequiredBytes()
 	}
 
+	userTags, err := getTags(req)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "parse user tags failed: %v", err)
+	}
+	formatOptions, err := parseMkfsOptions(req.GetParameters()[consts.MkfsOptions])
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid mkfsOptions: %v", err)
+	}
+
+	if len(formatOptions) > 0 {
+		for _, capability := range req.GetVolumeCapabilities() {
+			if capability.GetMount() == nil {
+				return nil, status.Error(codes.InvalidArgument, "mkfsOptions requires a filesystem volume")
+			}
+		}
+	}
+
 	zoneId := getZoneId(req)
 	if zoneId == "" {
 		klog.Errorf("CreateVolume %s: Can't get zoneId, please check your setup or set zone ID in storage class. Use zone from Meta service", req.Name)
@@ -98,6 +119,9 @@ func (cs *ControllerSvc) CreateVolume(ctx context.Context, req *csi.CreateVolume
 	}
 	volumeContext := map[string]string{}
 	volumeContext[consts.SnapshotID] = snapshotID
+	if len(formatOptions) > 0 {
+		volumeContext[consts.MkfsOptions] = req.GetParameters()[consts.MkfsOptions]
+	}
 
 	vol, err := cs.cloud.VolumeByName(ctx, req.GetName())
 	if err != nil {
@@ -141,7 +165,7 @@ func (cs *ControllerSvc) CreateVolume(ctx context.Context, req *csi.CreateVolume
 	}
 
 	// if volume is not already existed
-	volID, err := cs.cloud.CreateVolume(ctx, req.GetName(), volumeType, zoneId, snapshotID, capacity)
+	volID, err := cs.cloud.CreateVolume(ctx, req.GetName(), volumeType, zoneId, snapshotID, capacity, userTags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create volume %v: %w", req.GetName(), err)
 	}
@@ -491,6 +515,27 @@ func getVolumeTypeWithDefault(req *csi.CreateVolumeRequest) string {
 		return volumeType
 	}
 	return volumeTypeDefault
+}
+
+// getTags follows the VKE StorageClass format: key|value,key|value.
+func getTags(req *csi.CreateVolumeRequest) (map[string]string, error) {
+	tagsMap := map[string]string{defaultCreatedByKey: defaultCreatedByValue}
+	tags := req.GetParameters()[tagsKey]
+	if tags == "" {
+		return tagsMap, nil
+	}
+
+	for i, tag := range strings.Split(tags, ",") {
+		key, value, found := strings.Cut(tag, "|")
+		if !found {
+			return nil, fmt.Errorf("invalid tags format at entry %d: expected key|value", i+1)
+		}
+		if strings.HasPrefix(key, "volc:") || strings.HasPrefix(key, "sys:") {
+			return nil, fmt.Errorf("reserved tag key prefix at entry %d: volc: and sys: are not allowed", i+1)
+		}
+		tagsMap[key] = value
+	}
+	return tagsMap, nil
 }
 
 func getZoneId(req *csi.CreateVolumeRequest) string {

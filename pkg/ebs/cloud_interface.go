@@ -23,7 +23,7 @@ import (
 )
 
 type Cloud interface {
-	CreateVolume(ctx context.Context, name, volumeType, zoneId, snapshotId string, capacity int64) (id string, err error)
+	CreateVolume(ctx context.Context, name, volumeType, zoneId, snapshotId string, capacity int64, tags map[string]string) (id string, err error)
 	ExtendVolume(ctx context.Context, id string, newSize int64) (err error)
 	DeleteVolume(ctx context.Context, id string) error
 	DevicePathByVolId(volId string) string

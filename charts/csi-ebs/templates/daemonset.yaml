@@ -98,10 +98,15 @@ spec:
               value: {{ .Values.publicConfig.region }}
             - name: "VOLC_HOST"
               value: {{ .Values.publicConfig.endpoint }}
+            {{- if .Values.publicConfig.assumeRoleName }}
+            - name: "VOLC_ASSUMEROLENAME"
+              value: {{ .Values.publicConfig.assumeRoleName | quote }}
+            {{- else }}
             - name: "VOLC_ACCESSKEYID"
               value: {{ .Values.publicConfig.volcAK }}
             - name: "VOLC_SECRETACCESSKEY"
               value: {{ .Values.publicConfig.volcSK }}
+            {{- end }}
           securityContext:
             privileged: true
           volumeMounts:

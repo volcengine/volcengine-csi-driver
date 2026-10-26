@@ -112,7 +112,7 @@ func newFakeCloud() Cloud {
 	}
 }
 
-func (c *fakeCloud) CreateVolume(ctx context.Context, name, volumeType, zoneId, snapshotId string, capacity int64) (id string, err error) {
+func (c *fakeCloud) CreateVolume(ctx context.Context, name, volumeType, zoneId, snapshotId string, capacity int64, tags map[string]string) (id string, err error) {
 	r1 := rand.New(rand.NewSource(time.Now().UnixNano()))
 	v := &types.Volume{
 		Id:         fmt.Sprintf("vol-%d", r1.Uint64()),
@@ -240,7 +240,7 @@ func newFakeMounter() *fakeMounter {
 	}
 }
 
-func (f *fakeMounter) FormatAndMount(source string, target string, fstype string, options []string) error {
+func (f *fakeMounter) FormatAndMountWithOptions(source string, target string, fstype string, options, formatOptions []string) error {
 	// formats the given disk, do nothing
 
 	if err := f.Mount(source, target, fstype, options); err != nil {
